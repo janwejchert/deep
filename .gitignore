@@ -2,10 +2,12 @@
 *.zip
 *.npy
 *.csv
+*.log
 __pycache__/
 .DS_Store
 dataset/
-dataset_1d/
+dataset_1d/*
+!dataset_1d/subset_metadata_2000.csv
 dataset_1d_heartbreaker/
 dataset_clean/
 dataset_skel/
@@ -14,3 +16,8 @@ data_clean/
 eval_outputs/
 gradcam_outputs/
 notebooks/
+docs/
+
+!binary_1d_ecg_model.h5
+!binary_1d_ecg_model_fold*.h5
+!clean_oof_ecg_probs.npy

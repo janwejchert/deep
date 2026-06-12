@@ -156,7 +156,7 @@ Three fusion configurations were evaluated against the ECG-only baseline using t
 |---|---|---|---|---|---|
 | **ECG-only** (Baseline) | 0.9192 [0.9074–0.9302] | 0.9241 [0.9105–0.9370] | 0.8480 [0.8268–0.8701] | 0.8400 [0.8158–0.8634] | Reference |
 | **Heartbreaker Tier 1** (ECG + Demographics) | **0.9238** [0.9114–0.9348] | **0.9287** [0.9151–0.9407] | **0.8660** [0.8462–0.8857] | **0.8090** [0.7851–0.8318] | ✅ **ACCEPTED** (Primary Model) |
-| **Heartbreaker Tier 2** (ECG + Demographics MLP) | **0.9208** [0.9087–0.9324] | **0.9245** [0.9103–0.9380] | **0.8570** [0.8356–0.8796] | **0.8350** [0.8123–0.8586] | ✅ **ACCEPTED** (Alternative Model) |
+| **Heartbreaker Tier 2** (ECG + Demographics MLP) | **0.9218** [0.9099–0.9334] | **0.9238** [0.9088–0.9379] | **0.8590** [0.8382–0.8799] | **0.8360** [0.8140–0.8583] | ✅ **ACCEPTED** (Alternative Model) |
 | **Heartbreaker Tier 1 + Axis** (ECG + Demographics + Axis) | **0.9782** [0.9710–0.9843] | **0.9809** [0.9741–0.9865] | **0.8570** [0.8360–0.8789] | **0.9670** [0.9545–0.9784] | ✅ **ACCEPTED** (Secondary Model) |
 
 **Acceptance Decision:** Fusing demographics with the ECG signal achieves a robust OOF ROC-AUC of **0.9785** while raising specificity to **0.8090** (from the ECG baseline's 0.8400), satisfying the sensitivity floor ($\ge 0.85$). 

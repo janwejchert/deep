@@ -67,8 +67,8 @@ FUSION_EPOCHS   = 60
 FUSION_PATIENCE = 20
 
 ECG_ONLY_BASELINE = {
-    "roc_auc": 0.9192, "pr_auc": 0.9241,
-    "sensitivity": 0.8480, "specificity": 0.8400,
+    "roc_auc": 0.9243, "pr_auc": 0.9336,
+    "sensitivity": 0.8580, "specificity": 0.8410,
 }
 
 

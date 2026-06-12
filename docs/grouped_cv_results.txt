@@ -1,6 +1,0 @@
-5-Fold Grouped CV Results on dataset_skel
-Mean AUC ± Std: 0.9919 ± 0.0014
-Mean Accuracy ± Std: 0.9590 ± 0.0077
-Mean Sensitivity ± Std: 0.9591 ± 0.0116
-Mean Specificity ± Std: 0.9584 ± 0.0511
-Mean F1-score ± Std: 0.9768 ± 0.0045

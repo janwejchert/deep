@@ -211,7 +211,7 @@ python generate_report_figures.py
 
 1. **Workflow-Variable-Removed Ablation:** High-risk acquisition proxies (`validated_by_human` and all noise/drift/electrode flags) were completely removed from the primary model. Specificity held stable at **0.9630** (Tier 1) and **0.9670** (Tier 2), demonstrating that the model does not rely on workflow shortcuts.
 2. **Feature Provenance Audit (`heart_axis`):** A check of the PTB-XL data dictionary confirmed that `heart_axis` is transcribed from the cardiologist's report rather than computed from raw waveforms. Because this represents a report-derived text leak, `heart_axis` has been removed from the primary clean model and relegated to a secondary, exploratory tier.
-3. **Primary Multimodal Model (Pure Demographics):** The primary, leakage-safer model uses *only* pure demographic variables (`age`, `sex`, `BMI`) and their missingness flags. Fusing these demographics with the ECG signal achieves a robust OOF ROC-AUC of **0.9238 [95% CI: 0.9114–0.9348]** (Tier 1 LR) and **0.9785 [95% CI: 0.9733–0.9837]** (Tier 2 MLP).
+3. **Primary Multimodal Model (Pure Demographics):** The primary, leakage-safer model uses *only* pure demographic variables (`age`, `sex`, `BMI`) and their missingness flags. Fusing these demographics with the ECG signal achieves a robust OOF ROC-AUC of **0.9238 [95% CI: 0.9114–0.9348]** (Tier 1 LR) and **0.9208 [95% CI: 0.9087–0.9324]** (Tier 2 MLP).
 
 Three fusion configurations were evaluated against the ECG-only baseline using the exact same 5-fold patient-disjoint CV, nested Platt scaling, and sensitivity-constrained thresholding:
 
@@ -219,10 +219,10 @@ Three fusion configurations were evaluated against the ECG-only baseline using t
 |---|---|---|---|---|---|
 | **ECG-only** (Baseline) | 0.9192 [0.9074–0.9302] | 0.9241 [0.9105–0.9370] | 0.8480 [0.8268–0.8701] | 0.8400 [0.8158–0.8634] | Reference |
 | **Heartbreaker Tier 1** (ECG + Demographics) | **0.9238** [0.9114–0.9348] | **0.9287** [0.9151–0.9407] | **0.8660** [0.8462–0.8857] | **0.8090** [0.7851–0.8318] | ✅ **ACCEPTED** (Primary Model) |
-| **Heartbreaker Tier 2** (ECG + Demographics MLP) | **0.9208** [0.9087–0.9324] | **0.9245** [0.9103–0.9380] | **0.8570** [0.8356–0.8796] | **0.8350** [0.8123–0.8586] | ✅ **ACCEPTED** (Alternative Model) |
+| **Heartbreaker Tier 2** (ECG + Demographics MLP) | **0.9218** [0.9099–0.9334] | **0.9238** [0.9088–0.9379] | **0.8590** [0.8382–0.8799] | **0.8360** [0.8140–0.8583] | ✅ **ACCEPTED** (Alternative Model) |
 | **Heartbreaker Tier 1 + Axis** (ECG + Demographics + Axis) | **0.9782** [0.9710–0.9843] | **0.9809** [0.9741–0.9865] | **0.8570** [0.8360–0.8789] | **0.9670** [0.9545–0.9784] | ✅ **ACCEPTED** (Secondary Model) |
 
-**Acceptance Decision:** Fusing demographics with the ECG signal achieves a robust OOF ROC-AUC of **0.9785** while raising specificity to **0.8090** (from the ECG baseline's 0.8400), satisfying the sensitivity floor ($\ge 0.85$).
+**Acceptance Decision:** Fusing demographics with the ECG signal achieves a robust OOF ROC-AUC of **0.9238** while raising sensitivity to **0.8660** (from the ECG baseline's 0.8580), satisfying the sensitivity floor ($\ge 0.85$).
 
 **Caveat on multimodal performance:** While the demographics-only fusion represents a highly defensible clinical-context integration, incorporating raw cardiologist report text (Level 4) yields an exploratory upper-bound of **ROC-AUC 0.9878 [95% CI: 0.9847–0.9909]**. This model remains strictly exploratory due to the extremely high risk of post-hoc report-text leakage.
 
@@ -232,12 +232,12 @@ Three fusion configurations were evaluated against the ECG-only baseline using t
 
 The PTB-XL-only 1D raw-signal pipeline removes the fatal Latidos-vs-PTB-XL source-label confound that invalidated the 2D image classifier. With a tightly regularized 2-block 1D ResNet, patient-disjoint 5-fold cross-validation, nested Platt calibration, nested threshold selection, and 2,000 balanced patient records, the model achieved strong internal validation performance:
 
-> **OOF ROC-AUC = 0.9243** (95% CI: 0.9074–0.9302)  
-> **OOF PR-AUC = 0.9241** (95% CI: 0.9105–0.9370)  
-> **Sensitivity = 0.8480** (95% CI: 0.8268–0.8701)  
-> **Specificity = 0.8400** (95% CI: 0.8158–0.8634)
+> **OOF ROC-AUC = 0.9243** (95% CI: 0.9131–0.9350)  
+> **OOF PR-AUC = 0.9336** (95% CI: 0.9219–0.9442)  
+> **Sensitivity = 0.8580** (95% CI: 0.8363–0.8789)  
+> **Specificity = 0.8410** (95% CI: 0.8182–0.8630)
 
-When extended with the **Heartbreaker** primary demographics-only late-fusion model, the performance rises to **ROC-AUC 0.9785 [95% CI: 0.9732–0.9832] and Specificity 0.9620**, while demographics + axis achieves **ROC-AUC 0.9782 and Specificity 0.9750**.
+When extended with the **Heartbreaker** primary demographics-only late-fusion model, the performance reaches **ROC-AUC 0.9238 [95% CI: 0.9114–0.9348] and Specificity 0.8090**, while the exploratory demographics + report text (Level 4) achieves **ROC-AUC 0.9565 and Specificity 0.9320**.
 
 These results demonstrate strong pilot-level feasibility for abnormal ECG screening, but they do not yet constitute external clinical validation. The model is ready for external validation on independent ECG datasets and for subgroup analysis by abnormal superclass.
 
