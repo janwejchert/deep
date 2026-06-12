@@ -1,0 +1,7 @@
+Option 1A: 1D-CNN on PTB-XL (Single-Source, Confound-Free, OOF Aggregated)
+=========================================================================
+OOF ROC-AUC: 0.9192 (95% CI: 0.9074 - 0.9302)
+OOF PR-AUC: 0.9241 (95% CI: 0.9105 - 0.9370)
+OOF Accuracy: 0.8440 (95% CI: 0.8285 - 0.8595)
+OOF Sensitivity (Recall of Abnormal): 0.8480 (95% CI: 0.8268 - 0.8701)
+OOF Specificity: 0.8400 (95% CI: 0.8158 - 0.8634)

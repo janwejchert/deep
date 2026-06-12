@@ -1,0 +1,19 @@
+{
+  "train_auc": 0.8902,
+  "val_auc": 0.9117,
+  "test_auc": 0.7786,
+  "test_auc_ci_lo": 0.7083,
+  "test_auc_ci_hi": 0.8392,
+  "tta_test_auc": 0.792,
+  "tta_test_auc_ci_lo": 0.7229,
+  "tta_test_auc_ci_hi": 0.8539,
+  "mcnemar_p_value": 0.0171,
+  "confusion_matrix": {
+    "tn": 42,
+    "fp": 6,
+    "fn": 68,
+    "tp": 69
+  },
+  "test_accuracy": 0.6,
+  "trivial_baseline_accuracy": 0.7405
+}

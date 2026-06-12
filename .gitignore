@@ -1,0 +1,16 @@
+*.h5
+*.zip
+*.npy
+*.csv
+__pycache__/
+.DS_Store
+dataset/
+dataset_1d/
+dataset_1d_heartbreaker/
+dataset_clean/
+dataset_skel/
+dataset_split/
+data_clean/
+eval_outputs/
+gradcam_outputs/
+notebooks/

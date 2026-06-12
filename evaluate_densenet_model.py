@@ -1,0 +1,217 @@
+import os
+import json
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc, roc_auc_score
+from tensorflow.keras.preprocessing import image_dataset_from_directory
+from scipy import stats
+
+@tf.keras.utils.register_keras_serializable(package="Custom")
+class FocalLoss(tf.keras.losses.Loss):
+    def __init__(self, alpha=0.25, gamma=2.0, **kwargs):
+        super(FocalLoss, self).__init__(**kwargs)
+        self.alpha = alpha
+        self.gamma = gamma
+
+    def call(self, y_true, y_pred):
+        y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
+        epsilon = tf.keras.backend.epsilon()
+        y_pred = tf.clip_by_value(y_pred, epsilon, 1.0 - epsilon)
+        cross_entropy = -y_true * tf.math.log(y_pred) - (1.0 - y_true) * tf.math.log(1.0 - y_pred)
+        p_t = y_true * y_pred + (1.0 - y_true) * (1.0 - y_pred)
+        alpha_factor = y_true * self.alpha + (1.0 - y_true) * (1.0 - self.alpha)
+        modulating_factor = tf.math.pow(1.0 - p_t, self.gamma)
+        loss = alpha_factor * modulating_factor * cross_entropy
+        return tf.reduce_mean(loss, axis=-1)
+
+    def get_config(self):
+        config = super(FocalLoss, self).get_config()
+        config.update({"alpha": self.alpha, "gamma": self.gamma})
+        return config
+
+def preprocess_only(image, label):
+    return tf.keras.applications.densenet.preprocess_input(image), label
+
+def evaluate_split(model, ds, split_name):
+    print(f"\nEvaluating on {split_name} dataset...")
+    y_true = np.concatenate([y for x, y in ds], axis=0).flatten()
+    
+    # Preprocess the dataset before feeding it to the model
+    ds_preprocessed = ds.map(preprocess_only)
+    y_pred_probs = model.predict(ds_preprocessed).flatten()
+    
+    fpr, tpr, thresholds = roc_curve(y_true, y_pred_probs)
+    roc_auc = auc(fpr, tpr)
+    print(f"{split_name} ROC AUC Score: {roc_auc:.4f}")
+    return y_true, y_pred_probs, fpr, tpr, thresholds, roc_auc
+
+def bootstrap_auc_ci(y_true, y_prob, n_bootstraps=2000, alpha=0.05, seed=42):
+    rng = np.random.RandomState(seed)
+    aucs = []
+    for _ in range(n_bootstraps):
+        idx = rng.randint(0, len(y_true), len(y_true))
+        if len(np.unique(y_true[idx])) < 2:
+            continue
+        aucs.append(roc_auc_score(y_true[idx], y_prob[idx]))
+    aucs = np.array(aucs)
+    lo = np.percentile(aucs, 100 * alpha / 2)
+    hi = np.percentile(aucs, 100 * (1 - alpha / 2))
+    return lo, hi
+
+def find_threshold_for_sensitivity(y_true, y_prob, target_sens):
+    fpr, tpr, thresholds = roc_curve(y_true, y_prob)
+    valid = tpr >= target_sens
+    if not np.any(valid):
+        return thresholds[-1], tpr[-1], 1 - fpr[-1]
+    idx = np.where(valid)[0]
+    best_idx = idx[0]
+    thresh = thresholds[best_idx]
+    sens = tpr[best_idx]
+    spec = 1 - fpr[best_idx]
+    return thresh, sens, spec
+
+def mcnemar_test(y_true, y_pred_model, y_pred_baseline):
+    model_correct = (y_pred_model == y_true)
+    baseline_correct = (y_pred_baseline == y_true)
+    b = np.sum(model_correct & ~baseline_correct)
+    c = np.sum(~model_correct & baseline_correct)
+    if b + c == 0:
+        return 1.0
+    chi2 = (abs(b - c) - 1) ** 2 / (b + c)
+    p_value = 1 - stats.chi2.cdf(chi2, df=1)
+    return p_value
+
+def tta_predict(model, ds, img_height, img_width):
+    augmentations = [
+        lambda x: x,
+        lambda x: tf.image.adjust_brightness(x, 0.05),
+        lambda x: tf.image.adjust_brightness(x, -0.05),
+        lambda x: tf.roll(x, shift=int(img_width * 0.02), axis=2),
+        lambda x: tf.roll(x, shift=-int(img_width * 0.02), axis=2),
+    ]
+    all_preds = []
+    for aug_fn in augmentations:
+        preds = []
+        for images, _ in ds:
+            aug_images = aug_fn(images)
+            # Apply preprocessing after the augmentation function
+            preprocessed_images = tf.keras.applications.densenet.preprocess_input(aug_images)
+            pred = model.predict(preprocessed_images, verbose=0)
+            preds.append(pred.flatten())
+        all_preds.append(np.concatenate(preds))
+    return np.mean(all_preds, axis=0)
+
+def main():
+    train_dir = '/Users/felipedeleon/Desktop/Deep Ler,Project/dataset_split/train'
+    val_dir = '/Users/felipedeleon/Desktop/Deep Ler,Project/dataset_split/val'
+    test_dir = '/Users/felipedeleon/Desktop/Deep Ler,Project/dataset_split/test'
+    model_path = '/Users/felipedeleon/Desktop/Deep Ler,Project/densenet_ecg_model.h5'
+    docs_dir = '/Users/felipedeleon/Desktop/Deep Ler,Project/docs'
+    
+    if not os.path.exists(model_path):
+        print(f"Error: Model file {model_path} not found.")
+        return
+
+    batch_size = 16
+    img_height = 224
+    img_width = 224
+
+    kwargs = dict(
+        seed=123, image_size=(img_height, img_width), batch_size=batch_size,
+        label_mode='binary', class_names=['Normal', 'Abnormal'],
+        crop_to_aspect_ratio=True, shuffle=False
+    )
+
+    # Note: load raw datasets. Preprocessing is mapped inside evaluate_split & tta_predict
+    train_ds = image_dataset_from_directory(train_dir, **kwargs)
+    val_ds = image_dataset_from_directory(val_dir, **kwargs)
+    test_ds = image_dataset_from_directory(test_dir, **kwargs)
+    class_names = test_ds.class_names
+
+    print("Loading DenseNet model...")
+    model = tf.keras.models.load_model(model_path)
+
+    train_y, train_prob, _, _, _, train_auc = evaluate_split(model, train_ds, "Train")
+    val_y, val_prob, val_fpr, val_tpr, val_thresholds, val_auc = evaluate_split(model, val_ds, "Validation")
+    
+    J = val_tpr - val_fpr
+    optimal_idx = np.argmax(J)
+    optimal_threshold = val_thresholds[optimal_idx]
+    print(f"\nYouden's J Optimal Threshold: {optimal_threshold:.4f}")
+
+    thresh_90, sens_90, spec_90 = find_threshold_for_sensitivity(val_y, val_prob, 0.90)
+    thresh_95, sens_95, spec_95 = find_threshold_for_sensitivity(val_y, val_prob, 0.95)
+
+    test_y, test_prob, test_fpr, test_tpr, test_thresholds, test_auc = evaluate_split(model, test_ds, "Test")
+    auc_lo, auc_hi = bootstrap_auc_ci(test_y, test_prob)
+    print(f"Test AUC 95% CI: [{auc_lo:.4f}, {auc_hi:.4f}]")
+
+    print("\nRunning TTA...")
+    tta_prob = tta_predict(model, test_ds, img_height, img_width)
+    tta_auc = roc_auc_score(test_y, tta_prob)
+    tta_lo, tta_hi = bootstrap_auc_ci(test_y, tta_prob)
+    print(f"TTA Test AUC: {tta_auc:.4f} [95% CI: {tta_lo:.4f}, {tta_hi:.4f}]")
+
+    y_pred_classes = (test_prob >= optimal_threshold).astype(int)
+    report = classification_report(test_y, y_pred_classes, target_names=class_names, zero_division=0)
+    print(report)
+
+    cm = confusion_matrix(test_y, y_pred_classes)
+    tn, fp, fn, tp = cm.ravel()
+    specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
+    sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0
+    baseline_acc = np.sum(test_y) / len(test_y)
+    test_acc = (tn + tp) / len(test_y)
+
+    trivial_baseline = np.ones_like(test_y).astype(int)
+    mcnemar_p = mcnemar_test(test_y.astype(int), y_pred_classes, trivial_baseline)
+
+    summary = {
+        "train_auc": round(train_auc, 4),
+        "val_auc": round(val_auc, 4),
+        "test_auc": round(test_auc, 4),
+        "test_auc_ci_lo": round(auc_lo, 4),
+        "test_auc_ci_hi": round(auc_hi, 4),
+        "tta_test_auc": round(tta_auc, 4),
+        "tta_test_auc_ci_lo": round(tta_lo, 4),
+        "tta_test_auc_ci_hi": round(tta_hi, 4),
+        "mcnemar_p_value": round(mcnemar_p, 4),
+        "confusion_matrix": {"tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)},
+        "test_accuracy": round(test_acc, 4),
+        "trivial_baseline_accuracy": round(baseline_acc, 4)
+    }
+    
+    summary_path = os.path.join(docs_dir, 'summary_densenet.json')
+    with open(summary_path, 'w') as f:
+        json.dump(summary, f, indent=2)
+    print(f"\nSaved summary to {summary_path}")
+
+    # Plot Confusion Matrix
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
+    plt.title(f'Test Confusion Matrix (DenseNet, Youden Threshold={optimal_threshold:.3f})')
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    plt.tight_layout()
+    plt.savefig(os.path.join(docs_dir, 'confusion_matrix_densenet.png'), dpi=150)
+    plt.close()
+
+    # Plot ROC Curve
+    plt.figure(figsize=(8, 6))
+    plt.plot(test_fpr, test_tpr, color='darkorange', lw=2,
+             label=f'Test ROC (AUC = {test_auc:.3f} [{auc_lo:.3f}, {auc_hi:.3f}])')
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random (AUC = 0.50)')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Test ROC - DenseNet121 Model')
+    plt.legend(loc="lower right")
+    plt.savefig(os.path.join(docs_dir, 'roc_curve_densenet.png'), dpi=150)
+    plt.close()
+
+if __name__ == '__main__':
+    main()

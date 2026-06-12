@@ -1,0 +1,24 @@
+Multimodal ECG Model — OOF Results
+============================================================
+
+ECG-Only Baseline:
+  roc_auc: 0.9192
+  pr_auc: 0.9241
+  sensitivity: 0.8480
+  specificity: 0.8400
+
+Tier 1 — Probability Fusion (LR):
+  roc_auc: 0.9878
+  pr_auc: 0.9887
+  sensitivity: 0.8710
+  specificity: 0.9790
+  brier: 0.0459
+  ece: 0.0506
+
+Tier 2 — Embedding Fusion (MLP):
+  roc_auc: 0.9825
+  pr_auc: 0.9846
+  sensitivity: 0.8490
+  specificity: 0.9870
+  brier: 0.0481
+  ece: 0.0503
