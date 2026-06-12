@@ -111,21 +111,33 @@ All metrics are aggregated out-of-fold using Platt-calibrated predictions:
 
 ### 🫀 1D ResNet ECG-Only Model
 
-| Architecture Diagram | ROC Curve | Confusion Matrix |
-| :---: | :---: | :---: |
-| ![1D Architecture](reports/figures/fig6_architecture.png) | ![1D ECG ROC Curve](reports/figures/fig5_roc_curve.png) | ![1D ECG Confusion Matrix](reports/figures/fig3_confusion_matrix.png) |
+| Architecture Diagram | Confusion Matrix |
+| :---: | :---: |
+| ![1D Architecture](reports/figures/fig6_architecture.png) | ![1D ECG Confusion Matrix](reports/figures/fig3_confusion_matrix.png) |
+
+**ROC Curve Performance**
+<br>
+![1D ECG ROC Curve](reports/figures/fig5_roc_curve.png)
 
 ### ⚡ Heartbreaker Multimodal Fusion Model
 
-| Architecture Diagram | Multimodal ROC Curve | Multimodal Confusion Matrix |
-| :---: | :---: | :---: |
-| ![Heartbreaker Architecture](reports/figures/hb_fig4_architecture.png) | ![Heartbreaker ROC Curve](reports/figures/hb_meta_fig3_roc_curve.png) | ![Heartbreaker Confusion Matrix](reports/figures/hb_meta_fig2_confusion_matrix.png) |
+| Architecture Diagram | Confusion Matrix |
+| :---: | :---: |
+| ![Heartbreaker Architecture](reports/figures/hb_fig4_architecture.png) | ![Heartbreaker Confusion Matrix](reports/figures/hb_meta_fig2_confusion_matrix.png) |
+
+**ROC Curve Performance**
+<br>
+![Heartbreaker ROC Curve](reports/figures/hb_meta_fig3_roc_curve.png)
 
 ### 🩺 Multiclass 5-Label Model
 
-| Architecture Diagram | Multiclass Confusion Matrices | Multiclass ROC Curves | Multiclass PR Curves |
-| :---: | :---: | :---: | :---: |
-| ![1D Architecture](reports/figures/fig6_architecture.png)<br>*(Dense 5 Sigmoid Output)* | ![Multiclass CM](reports/figures/multiclass_confusion_matrix.png) | ![Multiclass ROC](reports/figures/multiclass_roc_curve.png) | ![Multiclass PR](reports/figures/multiclass_pr_curve.png) |
+| Architecture Diagram | Confusion Matrices |
+| :---: | :---: |
+| ![1D Architecture](reports/figures/fig6_architecture.png)<br>*(Dense 5 Sigmoid Output)* | ![Multiclass CM](reports/figures/multiclass_confusion_matrix.png) |
+
+| ROC Curves | PR Curves |
+| :---: | :---: |
+| ![Multiclass ROC](reports/figures/multiclass_roc_curve.png) | ![Multiclass PR](reports/figures/multiclass_pr_curve.png) |
 
 ### 🔍 Robustness & Ablation Analysis
 
