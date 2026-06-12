@@ -143,6 +143,14 @@ All metrics are aggregated out-of-fold using Platt-calibrated predictions:
 
 ### 🩺 Multiclass 5-Label Model
 
+This extension pivots from a binary abnormal/normal framework into a multi-label diagnostic system capable of identifying co-occurring pathologies. The model maps raw waveforms into the following 5 distinct clinical superclasses:
+
+* **NORM (Normal ECG)**: A healthy baseline electrocardiogram showing a regular sinus rhythm without any structurally significant abnormalities.
+* **MI (Myocardial Infarction)**: Often referred to as a "heart attack," indicating localized death of heart muscle tissue caused by a sudden blockage in coronary blood supply.
+* **STTC (ST/T-Change)**: Abnormalities in the ST segment or T wave. These are critical markers that often indicate early-stage ischemia (reduced blood flow) or repolarization abnormalities.
+* **CD (Conduction Disturbance)**: Interruptions or delays in the electrical pathways of the heart, such as Left or Right Bundle Branch Blocks (LBBB/RBBB).
+* **HYP (Hypertrophy)**: An abnormal thickening of the heart muscle (e.g., Left Ventricular Hypertrophy). This is typically caused by severe high blood pressure or valve disease, forcing the heart to pump harder.
+
 **Architecture Diagram**
 <br>
 *(Uses the 1D ResNet backbone but with a Dense 5 Sigmoid Output layer)*
