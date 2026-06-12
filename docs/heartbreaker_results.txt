@@ -8,17 +8,17 @@ ECG-Only Baseline:
   specificity: 0.8400
 
 Heartbreaker Tier 1 — Probability Fusion (LR):
-  roc_auc: 0.9786
-  pr_auc: 0.9812
-  sensitivity: 0.8520
-  specificity: 0.9670
-  brier: 0.0589
-  ece: 0.0499
+  roc_auc: 0.9785
+  pr_auc: 0.9811
+  sensitivity: 0.8570
+  specificity: 0.9620
+  brier: 0.0591
+  ece: 0.0459
 
 Heartbreaker Tier 2 — Embedding Fusion (MLP):
-  roc_auc: 0.9784
-  pr_auc: 0.9815
-  sensitivity: 0.8580
-  specificity: 0.9760
-  brier: 0.0544
-  ece: 0.0485
+  roc_auc: 0.9771
+  pr_auc: 0.9805
+  sensitivity: 0.8670
+  specificity: 0.9720
+  brier: 0.0568
+  ece: 0.0473
