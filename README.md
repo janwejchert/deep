@@ -153,9 +153,7 @@ This extension pivots from a binary abnormal/normal framework into a multi-label
 
 **Architecture Diagram**
 <br>
-*(Uses the 1D ResNet backbone but with a Dense 5 Sigmoid Output layer)*
-<br>
-![1D Architecture](reports/figures/fig6_architecture.png)
+![Multi-Heartbreaker Architecture](reports/figures/multiclass_architecture.png)
 
 **Confusion Matrices (Per Class)**
 <br>
