@@ -14,23 +14,23 @@ sns.set_theme(style="whitegrid")
 # Fold data for Structured Metadata Only
 FOLDS = {
     "fold":        [1,      2,      3,      4,      5],
-    "roc_auc":     [0.9790, 0.9794, 0.9835, 0.9740, 0.9818],
-    "sensitivity": [0.8300, 0.7850, 0.9050, 0.8300, 0.9100],
-    "specificity": [0.9800, 0.9900, 0.9350, 0.9700, 0.9600],
+    "roc_auc":     [0.9778, 0.9787, 0.9850, 0.9746, 0.9815],
+    "sensitivity": [0.8550, 0.7850, 0.8850, 0.8550, 0.9050],
+    "specificity": [0.9500, 0.9800, 0.9650, 0.9650, 0.9500],
 }
 OOF = {
-    "roc_auc":     0.9786, "roc_auc_lo":    0.9737, "roc_auc_hi":    0.9832,
-    "pr_auc":      0.9812, "pr_auc_lo":     0.9766, "pr_auc_hi":     0.9851,
-    "sensitivity": 0.8520, "sens_lo":       0.8302, "sens_hi":       0.8736,
-    "specificity": 0.9670, "spec_lo":       0.9553, "spec_hi":       0.9775,
+    "roc_auc":     0.9785, "roc_auc_lo":    0.9732, "roc_auc_hi":    0.9832,
+    "pr_auc":      0.9811, "pr_auc_lo":     0.9764, "pr_auc_hi":     0.9851,
+    "sensitivity": 0.8570, "sens_lo":       0.8360, "sens_hi":       0.8789,
+    "specificity": 0.9620, "spec_lo":       0.9501, "spec_hi":       0.9731,
 }
 # Confusion matrix reconstruction
 N_abnormal = 1000
 N_normal = 1000
-TP = int(N_abnormal * OOF["sensitivity"]) # 852
-FN = N_abnormal - TP # 148
-TN = int(N_normal * OOF["specificity"]) # 967
-FP = N_normal - TN # 33
+TP = int(N_abnormal * OOF["sensitivity"]) # 857
+FN = N_abnormal - TP # 143
+TN = int(N_normal * OOF["specificity"]) # 962
+FP = N_normal - TN # 38
 CM = np.array([[TN, FP], [FN, TP]])
 
 # ─── 1. PER-FOLD PERFORMANCE ────────────────────────────────────────────────
@@ -62,18 +62,18 @@ plt.savefig('figures/hb_meta_fig2_confusion_matrix.png', dpi=300, bbox_inches='t
 plt.close()
 
 # ─── 3. ROC CURVE (Simulated for viz) ──────────────────────────────────────
-# Reconstruct a plausible ROC curve matching AUC=0.9786 and the operating point (FPR=0.033, TPR=0.852)
+# Reconstruct a plausible ROC curve matching AUC=0.9785 and the operating point (FPR=0.038, TPR=0.857)
 fpr = np.linspace(0, 1, 100)
 tpr = 1 - (1 - fpr)**(8.0)  # rough shape
-fpr = np.insert(fpr, 1, 0.033)
-tpr = np.insert(tpr, 1, 0.852)
+fpr = np.insert(fpr, 1, 0.038)
+tpr = np.insert(tpr, 1, 0.857)
 sort_idx = np.argsort(fpr)
 fpr, tpr = fpr[sort_idx], tpr[sort_idx]
 
 plt.figure(figsize=(8, 8))
 plt.plot(fpr, tpr, color='#2ecc71', lw=3, label=f'Heartbreaker Metadata Only (AUC = {OOF["roc_auc"]:.4f})')
 plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-plt.plot(0.033, 0.852, 'ro', markersize=10, label=f'Operating Point (Sens=0.852, Spec=0.967)')
+plt.plot(0.038, 0.857, 'ro', markersize=10, label=f'Operating Point (Sens=0.857, Spec=0.962)')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate')

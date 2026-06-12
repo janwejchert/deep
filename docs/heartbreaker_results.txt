@@ -1,5 +1,5 @@
-Heartbreaker — Multimodal ECG Model OOF Results (Ablated Primary Demographics-Only Model)
-================================================================================
+Heartbreaker — Multimodal ECG Model OOF Results
+============================================================
 
 ECG-Only Baseline:
   roc_auc: 0.9192
@@ -8,17 +8,17 @@ ECG-Only Baseline:
   specificity: 0.8400
 
 Heartbreaker Tier 1 — Probability Fusion (LR):
-  roc_auc: 0.9771 (95% CI: 0.9698–0.9832)
-  pr_auc: 0.9798 (95% CI: 0.9729–0.9855)
-  sensitivity: 0.8520 (95% CI: 0.8302–0.8732)
-  specificity: 0.9630 (95% CI: 0.9502–0.9749)
-  brier: 0.0601 (95% CI: 0.0522–0.0685)
-  ece: 0.0489
+  roc_auc: 0.9785
+  pr_auc: 0.9811
+  sensitivity: 0.8570
+  specificity: 0.9620
+  brier: 0.0591
+  ece: 0.0459
 
 Heartbreaker Tier 2 — Embedding Fusion (MLP):
-  roc_auc: 0.9753 (95% CI: 0.9680–0.9819)
-  pr_auc: 0.9785 (95% CI: 0.9713–0.9846)
-  sensitivity: 0.8510 (95% CI: 0.8295–0.8718)
-  specificity: 0.9670 (95% CI: 0.9547–0.9782)
-  brier: 0.0574 (95% CI: 0.0498–0.0658)
-  ece: 0.0402
+  roc_auc: 0.9785
+  pr_auc: 0.9814
+  sensitivity: 0.8620
+  specificity: 0.9750
+  brier: 0.0561
+  ece: 0.0489
