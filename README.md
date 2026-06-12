@@ -141,7 +141,7 @@ pip install -r requirements.txt
 Download the balanced 2,000 patient subset of PTB-XL raw physiological signals:
 
 ```bash
-python src/data_prep/download_ptbxl_2000.py
+python src/data_processing/download_ptbxl_2000.py
 ```
 
 ### 3. Run the 1D Physiological Model (ECG-Only)
@@ -149,13 +149,13 @@ python src/data_prep/download_ptbxl_2000.py
 Train the 1D ResNet classifier on raw 10-second PTB-XL signal waveforms:
 
 ```bash
-python src/training/train_1d_ecg_model.py
+python src/model_training/train_1d_ecg_model.py
 ```
 
 Launch the interactive Streamlit triage application for raw ECG signals:
 
 ```bash
-streamlit run src/app/app.py
+streamlit run src/streamlit_dashboard/app.py
 ```
 
 ### 4. Run the Multimodal Fusion Model (Heartbreaker)
@@ -163,24 +163,24 @@ streamlit run src/app/app.py
 Train the multimodal model using fused ECG features and patient demographic metadata:
 
 ```bash
-python src/training/train_multimodal_ecg_model.py
+python src/model_training/train_multimodal_ecg_model.py
 ```
 
 Run stress tests, ablation analyses, and permutation importance evaluations on the multimodal classifier:
 
 ```bash
-python src/evaluation/run_heartbreaker_stress_tests.py
+python src/model_evaluation/run_heartbreaker_stress_tests.py
 ```
 
 ---
 
 ## 📁 Core Repository Structure
 
-* **`src/training/train_1d_ecg_model.py`**: Builds, trains, and calibrates the 2-block 1D ResNet using raw signal waveforms.
-* **`src/training/train_multimodal_ecg_model.py`**: Integrates demographic data and frozen ECG signal embeddings into a multimodal classifier.
-* **`src/evaluation/run_heartbreaker_stress_tests.py`**: Evaluates the multimodal model under permutation shuffling and performs feature ablation stress tests.
-* **`src/app/app.py`**: Interactive Streamlit application simulating the clinical triage dashboard using held-out test signals.
-* **`src/data_prep/multimodal_data_prep.py`**: Handles clean parsing, missingness encoding, and preprocessing of demographic variables.
+* **`src/model_training/train_1d_ecg_model.py`**: Builds, trains, and calibrates the 2-block 1D ResNet using raw signal waveforms.
+* **`src/model_training/train_multimodal_ecg_model.py`**: Integrates demographic data and frozen ECG signal embeddings into a multimodal classifier.
+* **`src/model_evaluation/run_heartbreaker_stress_tests.py`**: Evaluates the multimodal model under permutation shuffling and performs feature ablation stress tests.
+* **`src/streamlit_dashboard/app.py`**: Interactive Streamlit application simulating the clinical triage dashboard using held-out test signals.
+* **`src/data_processing/multimodal_data_prep.py`**: Handles clean parsing, missingness encoding, and preprocessing of demographic variables.
 * **`reports/final_ecg_report.md`**: Detailed final report detailing validation framework, correction of bugs, and experimental narratives.
 * **`reports/validation_report.md`**: In-depth threshold sweep analysis, confusion matrices, and metrics of the raw 1D pipeline.
 * **`reports/heartbreaker_validation_report.md`**: Validation guide, stress test metrics, and ablation logs for the Multimodal extension.
