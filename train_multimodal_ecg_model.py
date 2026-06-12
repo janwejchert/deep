@@ -319,6 +319,12 @@ def main():
     df_static, reports, y, patient_ids = build_metadata_matrix(
         META_CSV, include_text=INCLUDE_TEXT, tfidf_max_features=TFIDF_FEATURES
     )
+    # Drop workflow flags and noise flags (workflow-variable-removed ablation)
+    drop_cols = ["validated_by_human", "has_baseline_drift", "has_static_noise", "has_burst_noise", "has_electrode_prob", "noise_score"]
+    # Also drop report-derived heart_axis columns since they are transcribed from reports
+    axis_cols = [c for c in df_static.columns if c.startswith("axis_")]
+    drop_cols.extend(axis_cols)
+    df_static = df_static.drop(columns=[c for c in drop_cols if c in df_static.columns])
     df_meta_csv = pd.read_csv(META_CSV)
 
     # ── 2. Load raw ECG signals ───────────────────────────────────────

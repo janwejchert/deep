@@ -32,16 +32,18 @@ perm_features = [
     "Demographics",
     "Heart Axis",
     "Validated Flag",
+    "Workflow Flags (Group)",
     "Missingness Flags",
     "Noise/Drift Flags"
 ]
 
 perm_drops = [
-    0.0531,
-    0.0330,
-    0.0088,
-    0.0065,
-    0.0003
+    0.0611,
+    0.0360,
+    0.0081,
+    0.0064,
+    0.0012,
+    0.0000
 ]
 
 os.makedirs("figures", exist_ok=True)

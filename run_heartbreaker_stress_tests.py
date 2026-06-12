@@ -39,7 +39,7 @@ TARGET_SENS     = 0.85
 def get_feature_mask(feature_names, required_groups):
     """
     Returns boolean mask of columns to keep based on keywords.
-    Groups can be: 'demographic', 'axis', 'noise', 'missing', 'validated', 'random', 'report'
+    Groups can be: 'demographic', 'axis', 'noise', 'missing', 'validated', 'workflow_flags', 'random', 'report'
     """
     mask = np.zeros(len(feature_names), dtype=bool)
     for i, name in enumerate(feature_names):
@@ -52,6 +52,8 @@ def get_feature_mask(feature_names, required_groups):
         if 'missing' in required_groups and name.endswith('_missing'):
             mask[i] = True
         if 'validated' in required_groups and name == 'validated_by_human':
+            mask[i] = True
+        if 'workflow_flags' in required_groups and (name == 'validated_by_human' or name.startswith('has_') or name == 'noise_score'):
             mask[i] = True
         if 'random' in required_groups and name == 'random_noise':
             mask[i] = True
@@ -114,7 +116,7 @@ def main():
     # Tracking OOF predictions
     oof_probs = {m: np.zeros(len(y)) for m in model_configs}
     # Permutation OOF tracking for M6 (Primary safe)
-    perm_groups = ["demographic", "axis", "noise", "missing", "validated"]
+    perm_groups = ["demographic", "axis", "noise", "missing", "validated", "workflow_flags"]
     oof_perm_probs = {g: np.zeros(len(y)) for g in perm_groups}
 
     for fold, (train_idx, test_idx) in enumerate(skf.split(X_signals, y)):
@@ -172,10 +174,11 @@ def main():
                     X_te_perm = X_te.copy()
                     ecg_offset = 1 if cfg["ecg"] else 0
                     
-                    # Shuffle the columns belonging to this group
-                    for c_idx in range(len(sub_mask)):
-                        if sub_mask[c_idx]:
-                            np.random.shuffle(X_te_perm[:, c_idx + ecg_offset])
+                    # Shuffle the columns belonging to this group jointly as a block
+                    col_indices = [c_idx + ecg_offset for c_idx in range(len(sub_mask)) if sub_mask[c_idx]]
+                    if len(col_indices) > 0:
+                        perm_indices = np.random.permutation(len(X_te_perm))
+                        X_te_perm[:, col_indices] = X_te_perm[perm_indices][:, col_indices]
                     
                     perm_test_raw = lr.predict_proba(X_te_perm)[:, 1]
                     perm_test_cal = calibrator.predict_proba(perm_test_raw.reshape(-1, 1))[:, 1]
@@ -198,20 +201,21 @@ def main():
         sens = tp / (tp+fn)
         spec = tn / (tn+fp)
         brier = float(np.mean((probs - y) ** 2))
-        return auc, pr, sens, spec, brier
+        ci = bootstrap_ci(y, probs, preds)
+        return auc, pr, sens, spec, brier, ci
 
     results = {}
     for name in ["ECG_Only", "Metadata_Only", "Report_Only", "M1_Safe", "M3_Axis", "M4_Noise", "M5_Missing", "M6_Validated", "M7_Report", "M6_NegativeControl"]:
-        auc, pr, sens, spec, brier = evaluate(name, oof_probs[name])
-        results[name] = {"auc": auc, "pr": pr, "sens": sens, "spec": spec}
-        print(f"{name:.<25} AUC: {auc:.4f} | PR: {pr:.4f} | Spec: {spec:.4f}")
+        auc, pr, sens, spec, brier, ci = evaluate(name, oof_probs[name])
+        results[name] = {"auc": auc, "pr": pr, "sens": sens, "spec": spec, "brier": brier, "ci": ci}
+        print(f"{name:.<25} AUC: {auc:.4f} (95% CI: {ci['auc_ci'][0]:.4f}–{ci['auc_ci'][1]:.4f}) | PR: {pr:.4f} | Spec: {spec:.4f}")
 
     print("\n" + "="*60)
     print(" PERMUTATION TEST RESULTS (Drop in AUC from M6)")
     print("="*60)
     base_auc = results["M6_Validated"]["auc"]
     for p_group in perm_groups:
-        p_auc, _, _, _, _ = evaluate(p_group, oof_perm_probs[p_group])
+        p_auc, _, _, _, _, _ = evaluate(p_group, oof_perm_probs[p_group])
         drop = base_auc - p_auc
         print(f"Shuffled {p_group:.<15} AUC: {p_auc:.4f} (Drop: {drop:+.4f})")
 
@@ -219,7 +223,7 @@ def main():
     with open("stress_test_results.txt", "w") as f:
         f.write("ABLATION LADDER\n")
         for name, m in results.items():
-            f.write(f"{name:.<25} AUC: {m['auc']:.4f} | Sens: {m['sens']:.4f} | Spec: {m['spec']:.4f}\n")
+            f.write(f"{name:.<25} AUC: {m['auc']:.4f} (95% CI: {m['ci']['auc_ci'][0]:.4f}–{m['ci']['auc_ci'][1]:.4f}) | Sens: {m['sens']:.4f} | Spec: {m['spec']:.4f}\n")
         f.write("\nPERMUTATIONS\n")
         for p_group in perm_groups:
             p_auc = roc_auc_score(y, oof_perm_probs[p_group])

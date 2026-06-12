@@ -17,8 +17,8 @@ Heartbreaker Tier 1 — Probability Fusion (LR):
 
 Heartbreaker Tier 2 — Embedding Fusion (MLP):
   roc_auc: 0.9784
-  pr_auc: 0.9806
-  sensitivity: 0.8510
-  specificity: 0.9750
-  brier: 0.0549
-  ece: 0.0473
+  pr_auc: 0.9815
+  sensitivity: 0.8580
+  specificity: 0.9760
+  brier: 0.0544
+  ece: 0.0485
