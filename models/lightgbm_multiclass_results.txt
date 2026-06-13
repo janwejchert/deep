@@ -1,7 +1,7 @@
 LightGBM Multi-Label OOF Results (5 Diagnostic Superclasses)
 =============================================================
-[NORM] OOF ROC-AUC: 0.9219 | PR-AUC: 0.9283
-[MI] OOF ROC-AUC: 0.8837 | PR-AUC: 0.5868
-[STTC] OOF ROC-AUC: 0.9009 | PR-AUC: 0.6773
-[CD] OOF ROC-AUC: 0.8963 | PR-AUC: 0.7577
-[HYP] OOF ROC-AUC: 0.8885 | PR-AUC: 0.5126
+[NORM] OOF ROC-AUC: 0.9171 | PR-AUC: 0.9244
+[MI] OOF ROC-AUC: 0.8736 | PR-AUC: 0.5864
+[STTC] OOF ROC-AUC: 0.8995 | PR-AUC: 0.6739
+[CD] OOF ROC-AUC: 0.8905 | PR-AUC: 0.7473
+[HYP] OOF ROC-AUC: 0.8790 | PR-AUC: 0.4811

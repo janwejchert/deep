@@ -25,7 +25,7 @@ A comprehensive methodological audit was conducted to identify why the metrics w
 4. **Stale Threshold Reuse:** Reusing training-derived thresholds on testing data. *Fix: establish validation-only threshold selection.*
 
 ### Data Leakage & Visual Shortcuts (Model Cheating)
-5. **Patient-level Leakage:** Multiple records belonging to the same patient were split across training and testing sets. Approximately 65% of test images had near-duplicates in training. *Fix: use perceptual hashing (pHash) clustering to group near-duplicate images and apply GroupKFold.*
+5. **Patient-level Leakage:** Multiple records belonging to the same patient were split across training and testing sets. Approximately **65.0%** of the images in the test set had near-duplicates in the training set. *Fix: use perceptual hashing (pHash) clustering to group near-duplicate images and apply GroupKFold.*
 6. **Dimension Shortcut:** The Latidos and PTB-XL images had different dimensions, allowing the model to classify samples by image shape. *Fix: pad and resize all images to a uniform 512×512 resolution.*
 7. **Header-Text Shortcut:** Grad-CAM heatmaps highlighted metadata text headers instead of ECG waveforms. *Fix: crop out all headers and margins.*
 8. **Rendering / Tint Shortcut:** Grid colors and background tint differed significantly between sources. *Fix: binarize all images to black ink traces on a pure white background.*
@@ -172,22 +172,26 @@ To ensure performance gains are driven by true clinical context and not workflow
 
 To move beyond binary screening, we developed the **Multi-Heartbreaker V2** pipeline, transforming the system into a multi-label classifier capable of detecting 5 co-occurring diagnostic superclasses from the PTB-XL database: Normal ECG (NORM), Myocardial Infarction (MI), ST/T-Change (STTC), Conduction Disturbance (CD), and Hypertrophy (HYP).
 
-We compared two different approaches on the scaled dataset of **3,878 unique patients** (with 0% patient leakage):
+We compared two different approaches on the scaled dataset of **3,878 unique patients** (with 0% patient leakage). Note on scaling progression: While the binary and multimodal models were developed on a 2,000-patient cohort, we scaled the multiclass diagnostic system to 3,883 patients (yielding 3,878 successfully loaded raw records after dropping 5 records missing header files). This scaling progression successfully doubled the rare-class positive samples (specifically HYP from 121 to 240, and MI from 242 to 436).
+
 1. **Multi-Label 1D ResNet CNN**: Operating on raw signal waveforms.
 2. **Multi-Label LightGBM Classifier**: Trained on **59 cardiology-standard clinical features** extracted from the waveforms (e.g., Sokolow-Lyon, Cornell voltage, ST deviations).
 
 ### Head-to-Head Out-of-Fold (OOF) Performance
 | Diagnostic Class | CNN ROC-AUC (95% CI) | LightGBM ROC-AUC (95% CI) | CNN PR-AUC | LightGBM PR-AUC | Winner (ROC-AUC) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Normal (NORM)** | **0.9407** (0.9337–0.9474) | 0.9221 (0.9136–0.9308) | **0.9479** | 0.9285 | **CNN** |
-| **Myocardial Infarction (MI)** | **0.9310** (0.9194–0.9432) | 0.8839 (0.8663–0.8999) | **0.7121** | 0.5900 | **CNN** |
-| **ST/T-Change (STTC)** | **0.9205** (0.9086–0.9311) | 0.9009 (0.8887–0.9132) | **0.7231** | 0.6775 | **CNN** |
-| **Conduction Disturbance (CD)** | **0.9360** (0.9251–0.9453) | 0.8971 (0.8817–0.9107) | **0.8380** | 0.7586 | **CNN** |
-| **Hypertrophy (HYP)** | 0.7959 (0.7653–0.8249) | **0.8877** (0.8613–0.9134) | 0.2754 | **0.5098** | **LightGBM** |
+| **Normal (NORM)** | **0.9407** (0.9337–0.9474) | 0.9172 (0.9082–0.9261) | **0.9479** | 0.9245 | **CNN** |
+| **Myocardial Infarction (MI)** | **0.9310** (0.9194–0.9432) | 0.8737 (0.8547–0.8910) | **0.7121** | 0.5901 | **CNN** |
+| **ST/T-Change (STTC)** | **0.9205** (0.9086–0.9311) | 0.8996 (0.8859–0.9117) | **0.7231** | 0.6741 | **CNN** |
+| **Conduction Disturbance (CD)** | **0.9360** (0.9251–0.9453) | 0.8911 (0.8758–0.9061) | **0.8380** | 0.7482 | **CNN** |
+| **Hypertrophy (HYP)** | 0.7959 (0.7653–0.8249) | **0.8781** (0.8513–0.9049) | 0.2754 | **0.4772** | **LightGBM** |
 
 ### Key Insights
 * **The Rare-Class Bottleneck:** The CNN excelled on common classes but underperformed on the rarest class, **Hypertrophy (HYP)** (only 240 positive cases), achieving an ROC-AUC of **0.7959** and a PR-AUC of **0.2754**.
-* **Clinical Feature Engineering Triumph:** The LightGBM classifier bypassed this bottleneck by directly using clinical rules (e.g., Sokolow-Lyon and Cornell voltage indices), boosting HYP ROC-AUC to **0.8877** (+0.0918) and PR-AUC to **0.5098** (+0.2344).
+* **Clinical Feature Engineering Triumph:** The LightGBM classifier bypassed this bottleneck by directly using clinical rules (e.g., Sokolow-Lyon and Cornell voltage indices), boosting HYP ROC-AUC to **0.8781** (+0.0822) and PR-AUC to **0.4772** (+0.2018).
+
+> [!IMPORTANT]
+> **HYP Clinical Readiness Caveat:** Although the clinical feature-engineered LightGBM model significantly outperforms the CNN on Hypertrophy (ROC-AUC 0.8781 vs. 0.7959), the HYP class is still not clinically ready/usable. Stabilizing the operating points and shrinking the confidence intervals requires scaling the training pipeline to the full PTB-XL database (~21,837 records) to increase the absolute count of positive hypertrophy cases.
 
 ---
 

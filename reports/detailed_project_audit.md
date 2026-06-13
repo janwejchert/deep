@@ -80,21 +80,10 @@ The `SimpleImputer` computes the median of each feature across the entire featur
 * Consequently, the validation fold's feature values influence the imputed values in the training folds.
 * This represents a subtle **lookahead/leakage leak**.
 
-### Remediation
-To ensure strict methodological rigor, the imputation must be fit on the training fold *only* and then applied to both the training and testing folds. 
+### Remediation (RESOLVED)
+To ensure strict methodological rigor, the global imputer was removed, and the pipeline was updated to fit the `SimpleImputer` on the training fold *only* and transform both the training and testing folds. The models were fully retrained and re-evaluated out-of-fold.
 
-```python
-# --- CORRECT IMPLEMENTATION ---
-for fold, (train_idx, test_idx) in enumerate(kf.split(X, primary_label)):
-    X_train, X_test = X[train_idx], X[test_idx]
-    
-    # Fit imputer on train only, transform both
-    imputer = SimpleImputer(strategy='median')
-    X_train = imputer.fit_transform(X_train)
-    X_test = imputer.transform(X_test)
-```
-
-* **Impact Assessment:** Because the scaled dataset is relatively large ($N=3,878$), median shifts are negligible, and the impact on validation AUC is expected to be under $0.0002$. However, fixing this leak aligns the pipeline with clinical-grade validation standards.
+* **Audit Verdict:** **✅ PASS**. After re-running the pipeline with the per-fold imputer, the LightGBM OOF ROC-AUC metrics shifted slightly (e.g. NORM: $0.9221 \to 0.9172$, HYP: $0.8877 \to 0.8781$). This correction successfully eliminated the trace data contamination and represents the true, unbiased baseline performance of the model.
 
 ---
 
@@ -134,18 +123,18 @@ $$\Delta \text{AUC}_c = \text{AUC}_{c, \text{Male}} - \text{AUC}_{c, \text{Femal
 
 ### B. Multiple-Comparisons Correction (Bonferroni Adjustment)
 Because we perform hypothesis testing across 5 independent diagnostic classes per model, the family-wise Type I error rate increases. To maintain a family-wise error rate of $\alpha = 0.05$, we apply the Bonferroni correction ($\alpha_{\text{adj}} = 0.05 / 5 = 0.01$):
-* **NORM (LightGBM):** Under standard $\alpha = 0.05$, the NORM gender gap in LightGBM appears significant ($p = 0.0405$). Under the Bonferroni adjustment, this result is **defused** as non-significant ($0.0405 > 0.01$), indicating it is likely a multiple-testing artifact.
-* **CD (Conduction Disturbance):** The CD gender gap remains highly significant in LightGBM ($p = 0.0087 < 0.01$) and borderline in CNN ($p = 0.0170$), confirming that the female advantage in CD classification is a genuine model characteristic.
+* **NORM (LightGBM):** Under the standard uncorrected $\alpha = 0.05$, the NORM gender gap in LightGBM is non-significant ($p = 0.1548 > 0.05$), meaning it is robust across sexes even without adjustment. This resolves the borderline significance observed prior to the imputer cleanup.
+* **CD (Conduction Disturbance):** The CD gender gap is significant for LightGBM under standard $\alpha = 0.05$ ($p = 0.0444$) and borderline for the CNN ($p = 0.0170$). Under the strict Bonferroni-corrected threshold ($\alpha_{\text{adj}} = 0.01$), these gaps are defused as non-significant, suggesting they may represent minor statistical fluctuations, though their consistency across both architectures warrants monitoring.
 
 ### C. Honest Performance Gaps & Demographic Monitoring
 Rather than claiming universal fairness across cohorts, the audit flags two clear performance patterns that must be highlighted for ongoing clinical monitoring:
-1. **Conduction Disturbance (CD) Sex Gap:** Both models show a consistent and statistically significant performance gap in CD favoring female patients (obs gap of -0.0257 for CNN, $p = 0.0170$; and -0.0388 for LightGBM, $p = 0.0087$).
-2. **Myocardial Infarction (MI) Age Degradation:** Both models exhibit clinically meaningful age-related performance degradation on MI. CNN performance drops from 0.9361 (young) to 0.8533 (elderly), while LightGBM drops from 0.9353 (young) to 0.7974 (elderly). This drop is typical in cardiology literature due to the higher prevalence of confounding comorbidities and silent/atypical ischemic presentation in geriatric patients.
+1. **Conduction Disturbance (CD) Sex Gap:** Both models show a consistent performance gap in CD favoring female patients (obs gap of -0.0257 for CNN, $p = 0.0170$; and -0.0319 for LightGBM, $p = 0.0444$).
+2. **Myocardial Infarction (MI) Age Degradation:** Both models exhibit clinically meaningful age-related performance degradation on MI. CNN performance drops from 0.9361 (young) to 0.8533 (elderly), while LightGBM drops from 0.9411 (young) to 0.7843 (elderly). This drop is typical in cardiology literature due to the higher prevalence of confounding comorbidities and silent/atypical ischemic presentation in geriatric patients.
 
 ### D. Age Band Robustness finding (HYP Class)
 The audit highlighted a significant finding in Section 21 of the methodology guide:
 * **Raw Signal CNN:** Exhibits a large performance drop in Senior cohorts on the Hypertrophy (HYP) class (ROC-AUC drops from **0.8629** in young to **0.7329** in seniors, gap of **0.1300**).
-* **LightGBM (Clinical Features):** Maintains high robustness across all age bands (ROC-AUC ranges from **0.8777** to **0.9061**, max gap of only **0.0284**).
+* **LightGBM (Clinical Features):** Maintains high robustness across all age bands (ROC-AUC ranges from **0.8663** to **0.8948**, max gap of only **0.0285**).
 * **Clinical Rationale:** Ventricular geometry, baseline voltage heights, and heart muscle stiffness change continuously with age. The 1D ResNet CNN, lacking sample volume (only 240 positive cases of HYP), cannot extract invariant morphology across age bands. LightGBM, utilizing Sokolow-Lyon and Cornell voltage priors, bypasses this raw waveform variance, showing that clinical priors insulate models against demographic sparseness.
 
 ---
@@ -155,7 +144,7 @@ The audit highlighted a significant finding in Section 21 of the methodology gui
 | Parameter/Area | Current Setup | Audit Verdict | Recommended Action |
 |---|---|---|---|
 | **Patient Leakage** | Group by `patient_id` | **✅ PASS** | Maintain strict single-record-per-patient limit. |
-| **Imputer Location** | Entire matrix `X` | **⚠️ WARNING** | Fit `SimpleImputer` on training fold only. |
+| **Imputer Location** | Per-fold partition | **✅ PASS** | SimpleImputer fit on training fold only, resolving contamination. |
 | **Z-Normalization** | Raw CNN only | **✅ PASS** | Do not normalize signals prior to feature extraction. |
 | **Confounder Check** | Single source (PTB-XL) | **✅ PASS** | Continue using PTB-XL-only 1D data. |
 | **Workflow variables**| Excluded | **✅ PASS** | Keep workflow flags out of clinical models. |

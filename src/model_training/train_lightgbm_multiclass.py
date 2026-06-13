@@ -40,11 +40,6 @@ def main():
     
     X = df[feature_cols].values
     
-    # Impute NaN features with median
-    imputer = SimpleImputer(strategy='median')
-    X = imputer.fit_transform(X)
-    
-    # Build label matrix
     y = np.column_stack([df[f'label_{sc}'].values for sc in SUPERCLASSES])
     
     patient_ids = df['patient_id'].values
@@ -72,6 +67,11 @@ def main():
         
         X_train, X_test = X[train_idx], X[test_idx]
         y_train, y_test = y[train_idx], y[test_idx]
+        
+        # Fit SimpleImputer on training data only to prevent leakage
+        imputer = SimpleImputer(strategy='median')
+        X_train = imputer.fit_transform(X_train)
+        X_test = imputer.transform(X_test)
         
         for c_idx, class_name in enumerate(SUPERCLASSES):
             y_c_train = y_train[:, c_idx]

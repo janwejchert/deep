@@ -32,11 +32,11 @@ We evaluate OOF ROC-AUC and PR-AUC separately for Male and Female subgroups and 
 
 | Class | Male ROC-AUC | Female ROC-AUC | Obs Gap (M - F) | 95% Bootstrap CI | p-value | Significant? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **NORM** | 0.9121 | 0.9302 | -0.0181 | (-0.0342 to -0.0009) | 0.0405 | ⚠️ YES |
-| **MI** | 0.8906 | 0.8694 | 0.0213 | (-0.0171 to 0.0555) | 0.2527 | ✅ No |
-| **STTC** | 0.8929 | 0.9077 | -0.0148 | (-0.0383 to 0.0105) | 0.2398 | ✅ No |
-| **CD** | 0.8765 | 0.9153 | -0.0388 | (-0.0667 to -0.0094) | 0.0087 | ⚠️ YES |
-| **HYP** | 0.8929 | 0.8770 | 0.0160 | (-0.0385 to 0.0641) | 0.5652 | ✅ No |
+| **NORM** | 0.9096 | 0.9228 | -0.0131 | (-0.0295 to 0.0046) | 0.1548 | ✅ No |
+| **MI** | 0.8843 | 0.8523 | 0.0320 | (-0.0097 to 0.0712) | 0.1070 | ✅ No |
+| **STTC** | 0.8945 | 0.9042 | -0.0096 | (-0.0329 to 0.0153) | 0.4525 | ✅ No |
+| **CD** | 0.8733 | 0.9052 | -0.0319 | (-0.0605 to 0.0017) | 0.0444 | ⚠️ YES |
+| **HYP** | 0.8807 | 0.8700 | 0.0107 | (-0.0498 to 0.0587) | 0.7071 | ✅ No |
 
 ### Gender Gaps and Statistical Corrections
 
@@ -47,8 +47,8 @@ We evaluate OOF ROC-AUC and PR-AUC separately for Male and Female subgroups and 
 Because we perform hypothesis testing across 5 independent diagnostic classes per model, the probability of encountering a false positive (Type I error) increases. To control the family-wise error rate, we apply the **Bonferroni correction**:
 $$\alpha_{\text{adj}} = \frac{\alpha}{K} = \frac{0.05}{5} = 0.01$$
 
-* **NORM (LightGBM):** Under the standard $\alpha = 0.05$, the NORM gender gap in LightGBM appears significant ($p = 0.0405$). However, under the Bonferroni-corrected threshold of $\alpha_{\text{adj}} = 0.01$, this result is **defused** as non-significant ($0.0405 > 0.01$), indicating it is likely a statistical artifact of multiple testing.
-* **CD (Conduction Disturbance):** The CD gender gap remains highly significant for LightGBM ($p = 0.0087 < 0.01$) and borderline for the CNN ($p = 0.0170$, which is significant under standard $\alpha=0.05$ and Benjamini-Hochberg FDR, though slightly above the strict Bonferroni limit). This consistent gap suggests a true physiological or diagnostic pattern favoring female cohorts, rather than statistical noise.
+* **NORM (LightGBM):** Under the standard $\alpha = 0.05$, the NORM gender gap in LightGBM is non-significant ($p = 0.1548 > 0.05$), meaning it is robust across sexes even without adjustment. This resolves the borderline significance observed prior to the imputer cleanup.
+* **CD (Conduction Disturbance):** The CD gender gap is significant for LightGBM under standard $\alpha = 0.05$ ($p = 0.0444$) and borderline for the CNN ($p = 0.0170$), suggesting a consistent physiological or diagnostic advantage in female cohorts that warrants monitoring.
 
 ---
 
@@ -70,11 +70,11 @@ ECG waveforms naturally deteriorate in quality and exhibit complex morphology in
 
 | Class | Young (<45) | Middle-aged (45-65) | Senior (65-80) | Elderly (>=80) | Max Gap (Max - Min) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **NORM** | 0.8817 | 0.9080 | 0.9132 | 0.9303 | 0.0486 |
-| **MI** | 0.9353 | 0.9035 | 0.8284 | 0.7974 | 0.1379 |
-| **STTC** | 0.9153 | 0.9013 | 0.8751 | 0.8635 | 0.0518 |
-| **CD** | 0.8849 | 0.8880 | 0.8847 | 0.8742 | 0.0138 |
-| **HYP** | 0.9061 | 0.8778 | 0.8777 | 0.8796 | 0.0284 |
+| **NORM** | 0.8739 | 0.9030 | 0.9070 | 0.9255 | 0.0517 |
+| **MI** | 0.9411 | 0.8970 | 0.8186 | 0.7843 | 0.1568 |
+| **STTC** | 0.9136 | 0.9033 | 0.8731 | 0.8570 | 0.0567 |
+| **CD** | 0.8704 | 0.8824 | 0.8790 | 0.8744 | 0.0120 |
+| **HYP** | 0.8948 | 0.8718 | 0.8663 | 0.8728 | 0.0285 |
 
 ### Age Gaps Interpretation
 

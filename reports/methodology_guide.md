@@ -1342,11 +1342,11 @@ The out-of-fold (OOF) ROC-AUC performance was evaluated separately for Male and 
 #### LightGBM (Clinical Features) Gender Gaps
 | Class | Male ROC-AUC | Female ROC-AUC | Obs Gap (M - F) | 95% Bootstrap CI | p-value | Significant? |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **NORM** | 0.9121 | 0.9302 | -0.0181 | (-0.0342 to -0.0009) | 0.0405 | ⚠️ YES |
-| **MI** | 0.8906 | 0.8694 | 0.0213 | (-0.0171 to 0.0555) | 0.2527 | ✅ No |
-| **STTC** | 0.8929 | 0.9077 | -0.0148 | (-0.0383 to 0.0105) | 0.2398 | ✅ No |
-| **CD** | 0.8765 | 0.9153 | -0.0388 | (-0.0667 to -0.0094) | 0.0087 | ⚠️ YES |
-| **HYP** | 0.8929 | 0.8770 | 0.0160 | (-0.0385 to 0.0641) | 0.5652 | ✅ No |
+| **NORM** | 0.9096 | 0.9228 | -0.0131 | (-0.0295 to 0.0046) | 0.1548 | ✅ No |
+| **MI** | 0.8843 | 0.8523 | 0.0320 | (-0.0097 to 0.0712) | 0.1070 | ✅ No |
+| **STTC** | 0.8945 | 0.9042 | -0.0096 | (-0.0329 to 0.0153) | 0.4525 | ✅ No |
+| **CD** | 0.8733 | 0.9052 | -0.0319 | (-0.0605 to 0.0017) | 0.0444 | ⚠️ YES |
+| **HYP** | 0.8807 | 0.8700 | 0.0107 | (-0.0498 to 0.0587) | 0.7071 | ✅ No |
 
 ### 21.2 Age Band Generalization and Robustness
 ECG waveforms naturally deteriorate in quality and exhibit complex morphology in elderly patients due to progressive cardiac stiffening, conduction system calcification, and multi-disease presentation. We evaluated performance robustness across four distinct age bands.
@@ -1363,28 +1363,28 @@ ECG waveforms naturally deteriorate in quality and exhibit complex morphology in
 #### LightGBM (Clinical Features) Age Band ROC-AUC
 | Class | Young (<45) | Middle-aged (45-65) | Senior (65-80) | Elderly (>=80) | Max Gap (Max - Min) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **NORM** | 0.8817 | 0.9080 | 0.9132 | 0.9303 | 0.0486 |
-| **MI** | 0.9353 | 0.9035 | 0.8284 | 0.7974 | 0.1379 |
-| **STTC** | 0.9153 | 0.9013 | 0.8751 | 0.8635 | 0.0518 |
-| **CD** | 0.8849 | 0.8880 | 0.8847 | 0.8742 | 0.0138 |
-| **HYP** | 0.9061 | 0.8778 | 0.8777 | 0.8796 | 0.0284 |
+| **NORM** | 0.8739 | 0.9030 | 0.9070 | 0.9255 | 0.0517 |
+| **MI** | 0.9411 | 0.8970 | 0.8186 | 0.7843 | 0.1568 |
+| **STTC** | 0.9136 | 0.9033 | 0.8731 | 0.8570 | 0.0567 |
+| **CD** | 0.8704 | 0.8824 | 0.8790 | 0.8744 | 0.0120 |
+| **HYP** | 0.8948 | 0.8718 | 0.8663 | 0.8728 | 0.0285 |
 
 ### 21.3 Key Findings and Statistical Corrections
 
 1. **Clinical Feature Engineering Protects Against Rare-Class Age Degradation:** 
    The rarest pathology in our dataset is Hypertrophy (HYP) (only 240 positive cases). When evaluating the raw signal 1D ResNet CNN, we observe a severe age band generalization gap of **0.1300**, where performance drops from an ROC-AUC of **0.8629** in young patients to **0.7329** in senior cohorts. This is because raw waveform neural representations degrade as heart muscle stiffness and complex age-related anatomical changes distort the raw ECG morphology. 
    
-   In contrast, the clinical feature-engineered LightGBM model displays remarkable cohort robustness on **HYP**, maintaining a maximum gap of only **0.0284** across all age bands (ROC-AUC ranges from 0.8777 to 0.9061). By explicitly encoding cardiological formulas (such as the Sokolow-Lyon index and Cornell voltage criteria), the LightGBM model is insulated against raw morphological shifts that confound the deep neural network.
+   In contrast, the clinical feature-engineered LightGBM model displays remarkable cohort robustness on **HYP**, maintaining a maximum gap of only **0.0285** across all age bands (ROC-AUC ranges from 0.8663 to 0.8948). By explicitly encoding cardiological formulas (such as the Sokolow-Lyon index and Cornell voltage criteria), the LightGBM model is insulated against raw morphological shifts that confound the deep neural network.
 
 2. **Honesty Regarding Subgroup Gaps & Demographic Monitoring:**
    Rather than claiming universal fairness across all patient cohorts, a rigorous clinical audit reveals two key findings that require ongoing monitoring:
-   * **Conduction Disturbance (CD) Sex Gap:** Both models show a consistent and statistically significant performance gap in CD favoring female patients (obs gap of -0.0257 for CNN, $p = 0.0170$; and -0.0388 for LightGBM, $p = 0.0087$).
-   * **Myocardial Infarction (MI) Age Degradation:** Both models exhibit clinically meaningful age-related performance degradation on MI. CNN performance drops from 0.9361 (young) to 0.8533 (elderly), while LightGBM drops from 0.9353 (young) to 0.7974 (elderly). This drop is typical in cardiology literature due to the higher prevalence of confounding comorbidities and silent/atypical ischemic presentation in geriatric patients.
+   * **Conduction Disturbance (CD) Sex Gap:** Both models show a consistent performance gap in CD favoring female patients (obs gap of -0.0257 for CNN, $p = 0.0170$; and -0.0319 for LightGBM, $p = 0.0444$).
+   * **Myocardial Infarction (MI) Age Degradation:** Both models exhibit clinically meaningful age-related performance degradation on MI. CNN performance drops from 0.9361 (young) to 0.8533 (elderly), while LightGBM drops from 0.9411 (young) to 0.7843 (elderly). This drop is typical in cardiology literature due to the higher prevalence of confounding comorbidities and silent/atypical ischemic presentation in geriatric patients.
 
 3. **Multiple-Comparisons Correction (Bonferroni Adjustment):**
    To control the family-wise Type I error rate when conducting hypothesis tests across 5 independent diagnostic classes, we apply the Bonferroni correction ($\alpha_{\text{adj}} = 0.05 / 5 = 0.01$):
-   * **NORM (LightGBM):** Under a standard uncorrected $\alpha = 0.05$, the NORM gender gap in LightGBM appears significant ($p = 0.0405$). Under the Bonferroni adjustment, this result is **defused** as non-significant ($0.0405 > 0.01$), indicating it is likely a multiple-testing artifact.
-   * **CD (Conduction Disturbance):** The CD gender gap remains highly significant in LightGBM ($p = 0.0087 < 0.01$) and borderline in CNN ($p = 0.0170$), reinforcing that the female advantage in CD classification is a genuine model characteristic.
+   * **NORM (LightGBM):** Under the standard uncorrected $\alpha = 0.05$, the NORM gender gap in LightGBM is non-significant ($p = 0.1548 > 0.05$), meaning it is robust across sexes even without adjustment. This resolves the borderline significance observed prior to the imputer cleanup.
+   * **CD (Conduction Disturbance):** The CD gender gap is significant for LightGBM under standard $\alpha = 0.05$ ($p = 0.0444$) and borderline for the CNN ($p = 0.0170$). Under the strict Bonferroni-corrected threshold ($\alpha_{\text{adj}} = 0.01$), these gaps are defused as non-significant, suggesting they may represent minor statistical fluctuations, though their consistency across both architectures warrants monitoring.
 
 ---
 

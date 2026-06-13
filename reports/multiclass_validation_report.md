@@ -47,16 +47,19 @@ All metrics are computed out-of-fold (OOF) across the 5 cross-validation folds. 
 
 | Diagnostic Class | CNN ROC-AUC (95% CI) | LightGBM ROC-AUC (95% CI) | CNN PR-AUC | LightGBM PR-AUC | Winner (ROC-AUC) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Normal (NORM)** | **`0.9407`** `(0.9337–0.9474)` | `0.9221` `(0.9136–0.9308)` | **`0.9479`** | `0.9285` | **CNN** |
-| **Myocardial Infarction (MI)** | **`0.9310`** `(0.9194–0.9432)` | `0.8839` `(0.8663–0.8999)` | **`0.7121`** | `0.5900` | **CNN** |
-| **ST/T-Change (STTC)** | **`0.9205`** `(0.9086–0.9311)` | `0.9009` `(0.8887–0.9132)` | **`0.7231`** | `0.6775` | **CNN** |
-| **Conduction Disturbance (CD)** | **`0.9360`** `(0.9251–0.9453)` | `0.8971` `(0.8817–0.9107)` | **`0.8380`** | `0.7586` | **CNN** |
-| **Hypertrophy (HYP)** | `0.7959` `(0.7653–0.8249)` | **`0.8877`** `(0.8613–0.9134)` | `0.2754` | **`0.5098`** | **LightGBM** |
+| **Normal (NORM)** | **`0.9407`** `(0.9337–0.9474)` | `0.9172` `(0.9082–0.9261)` | **`0.9479`** | `0.9245` | **CNN** |
+| **Myocardial Infarction (MI)** | **`0.9310`** `(0.9194–0.9432)` | `0.8737` `(0.8547–0.8910)` | **`0.7121`** | `0.5901` | **CNN** |
+| **ST/T-Change (STTC)** | **`0.9205`** `(0.9086–0.9311)` | `0.8996` `(0.8859–0.9117)` | **`0.7231`** | `0.6741` | **CNN** |
+| **Conduction Disturbance (CD)** | **`0.9360`** `(0.9251–0.9453)` | `0.8911` `(0.8758–0.9061)` | **`0.8380`** | `0.7482` | **CNN** |
+| **Hypertrophy (HYP)** | `0.7959` `(0.7653–0.8249)` | **`0.8781`** `(0.8513–0.9049)` | `0.2754` | **`0.4772`** | **LightGBM** |
 
 ### 🔍 Key Methodology Findings
 1. **Dataset Scaling Impact**: Expanding the dataset from 2,000 to 3,883 records and training for 40 epochs led to a major performance uplift for the CNN on common classes (e.g., NORM ROC-AUC rose to **0.9407** and MI ROC-AUC rose to **0.9310**).
 2. **Rare-Class Failure of CNN**: For the rarest class, **Hypertrophy (HYP)** (only 240 positive cases), the CNN struggled, achieving a low ROC-AUC of **0.7959** and a PR-AUC of **0.2754**. This is because deep learning requires large sample sizes to discover complex diagnostic features from raw waves.
-3. **Cardiology Feature Engineering Triumph**: The LightGBM model, trained on 59 expert features, bypassed this bottleneck by directly utilizing textbooks rules (e.g., the **Sokolow-Lyon index** and **Cornell voltage criteria**). This resulted in a massive boost for **HYP** performance, pushing ROC-AUC to **0.8877** (+0.0918) and PR-AUC to **0.5098** (+0.2344).
+3. **Cardiology Feature Engineering Triumph**: The LightGBM model, trained on 59 expert features, bypassed this bottleneck by directly utilizing textbooks rules (e.g., the **Sokolow-Lyon index** and **Cornell voltage criteria**). This resulted in a massive boost for **HYP** performance, pushing ROC-AUC to **0.8781** (+0.0822) and PR-AUC to **0.4772** (+0.2018).
+
+> [!IMPORTANT]
+> **HYP Clinical Readiness Caveat:** Although the clinical feature-engineered LightGBM model significantly outperforms the CNN on Hypertrophy (ROC-AUC 0.8781 vs. 0.7959), the HYP class is still not clinically ready/usable. Stabilizing the operating points and shrinking the confidence intervals requires scaling the training pipeline to the full PTB-XL database (~21,837 records) to increase the absolute count of positive hypertrophy cases.
 
 ---
 
@@ -76,11 +79,11 @@ Optimal decision thresholds are computed independently per class using Youden's 
 ### B. Multi-Label LightGBM (Cardiologist Features)
 | Class | Threshold | Sensitivity (Recall) | Specificity | PPV (Precision) | NPV | F1 Score |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **NORM** | `0.564` | `0.857` | `0.842` | `0.876` | `0.819` | `0.866` |
-| **MI** | `0.057` | `0.834` | `0.781` | `0.324` | `0.974` | `0.467` |
-| **STTC** | `0.299` | `0.831` | `0.814` | `0.489` | `0.957` | `0.616` |
-| **CD** | `0.338` | `0.759` | `0.897` | `0.619` | `0.944` | `0.682` |
-| **HYP** | `0.124` | `0.764` | `0.892` | `0.314` | `0.983` | `0.445` |
+| **NORM** | `0.497` | `0.886` | `0.811` | `0.859` | `0.845` | `0.872` |
+| **MI** | `0.068` | `0.804` | `0.794` | `0.330` | `0.970` | `0.468` |
+| **STTC** | `0.300` | `0.810` | `0.835` | `0.513` | `0.954` | `0.629` |
+| **CD** | `0.358` | `0.763` | `0.888` | `0.602` | `0.944` | `0.673` |
+| **HYP** | `0.082` | `0.793` | `0.851` | `0.257` | `0.984` | `0.388` |
 
 ---
 
