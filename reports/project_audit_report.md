@@ -16,6 +16,13 @@ The following scripts define the active, methodologically valid pipeline. **Futu
 | `train_1d_ecg_model.py` | Trains the 1D plain CNN baseline model. | **Active** (Baseline Training) |
 | `ablation_experiments.py` | The definitive training script. Implements the 1D ResNet, `ECGDataGenerator` (augmentation), Binary Focal Loss, and 5-fold cross-validation. Calibrates via Platt Scaling and outputs per-fold metrics. | **Active** (Primary Model Training) |
 | `get_1d_metrics.py` | Standalone inference script that loads the final `binary_1d_ecg_model.h5`, evaluates test data, and reports AUC and threshold metrics. | **Active** (Inference) |
+| `src/data_processing/create_multiclass_dataset.py` | Maps 71 SCP diagnostic codes to 5 superclasses, filters by signal availability, and deduplicates patients. | **Active** (Multiclass Data prep) |
+| `src/data_processing/extract_clinical_features.py` | Extracts 59 cardiology-standard features (voltage, wave intervals, etc.) from raw 12-lead waveforms. | **Active** (Feature Extraction) |
+| `src/model_training/train_multiclass_ecg_model.py` | Trains the multi-label 1D ResNet CNN (5 superclasses) with sigmoid activations. | **Active** (Multiclass Deep Learning) |
+| `src/model_training/train_lightgbm_multiclass.py` | Trains 5 independent LightGBM classifiers (one-vs-rest) on 59 extracted clinical features. | **Active** (Multiclass LightGBM) |
+| `src/model_evaluation/evaluate_multiclass_model.py` | Evaluates multi-label OOF performance, sweeps thresholds (Youden's J), and computes bootstrap CIs. | **Active** (Multiclass Evaluation) |
+| `src/model_evaluation/evaluate_subgroups_fairness.py` | Evaluates model performance across demographic subgroups (sex, age bands) and performs bootstrap significance testing. | **Active** (Fairness Evaluation) |
+| `src/leakage_auditing/verify_multiclass_dataset.py` | Audits the multi-label dataset for patient overlap/leakage. | **Active** (Multiclass Leakage Audit) |
 
 ## 3. Deprecated Pipeline (2D Image Confound)
 The following scripts, notebooks, and models relate to the 2D image classification approach. They are retained for historical documentation and methodological reference but **must not be used to train clinical classifiers** because they suffer from the Latidos/PTB-XL source confound.
@@ -48,17 +55,23 @@ The active 1D model is defined in `train_1d_ecg_model.py`.
 > By eliminating artificial positive-class biases and computing metrics globally across all out-of-fold predictions rather than averaging noisy per-fold specificities, the model achieves a vastly more stable and defensible specificity. The ROC-AUC is statistically sound, though the pilot size limits precision.
 
 ## 5. Official Documentation Map
-The project is documented through three primary markdown files:
+The project is documented through five primary markdown files:
 
 1. **`methodology_guide.md`**
-   - *Purpose:* Deep mathematical and theoretical explanation of the pipeline, from why 2D CNNs fail due to source-confounds, to the architecture of the 1D ResNet.
-   - *Status:* Fully updated to reflect the 1D ResNet implementation and metrics.
+   - *Purpose:* Deep mathematical and theoretical explanation of the pipeline, from why 2D CNNs fail due to source-confounds, to the 1D ResNet and LightGBM multi-label formulations, and subgroup fairness evaluations.
+   - *Status:* Fully updated to reflect the 1D ResNet, Heartbreaker, Multi-Heartbreaker, and subgroup analyses.
 2. **`validation_report.md`**
-   - *Purpose:* Detailed metrics reporting for the 1D ResNet (ROC curves, PR curves, threshold sweeps, fold-by-fold breakdowns).
+   - *Purpose:* Detailed metrics reporting for the binary 1D ResNet (ROC curves, PR curves, threshold sweeps, fold-by-fold breakdowns).
    - *Status:* Fully updated and reflects the honest limitations of the 200-patient pilot.
 3. **`final_ecg_report.md`**
-   - *Purpose:* The overarching project narrative, focusing on the audit of the 2D models and the subsequent pivot to 1D.
+   - *Purpose:* The overarching project narrative, documenting the audit of 2D models, pivot to 1D, Heartbreaker multimodal extension, Multi-Heartbreaker multiclass modeling, and subgroup fairness conclusions.
    - *Status:* Fully updated. Contains the definitive "Perfect Methodology Checklist."
+4. **`multiclass_validation_report.md`**
+   - *Purpose:* Head-to-head performance evaluation of the Multi-Label 1D ResNet CNN vs. LightGBM on 59 cardiology features.
+   - *Status:* Fully updated.
+5. **`subgroup_fairness_report.md`**
+   - *Purpose:* Evaluates model generalization and potential diagnostic bias across patient sex and age bands.
+   - *Status:* Fully updated.
 
 ## 6. Next Steps Roadmap
 The 1D pipeline has successfully proven pilot feasibility without leakage or source confounds. The next steps for the incoming engineering or research team are:
