@@ -1,0 +1,18 @@
+# Runtime pin for Streamlit Community Cloud (and conda users).
+#
+# WHY THIS FILE EXISTS:
+#   tensorflow==2.16.1 publishes NO wheels for Python 3.12+/3.13/3.14. Streamlit
+#   Cloud's default interpreter (currently 3.14) therefore cannot resolve the stack
+#   and falls back to compiling numpy/pandas from source — the deploy that hangs.
+#   Pinning Python 3.11 gives fast manylinux wheels for the entire stack.
+#
+# When this file is present, Streamlit Cloud builds with conda at Python 3.11 and
+# installs the pip dependencies from requirements.txt.
+name: deep
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - -r requirements.txt
