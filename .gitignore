@@ -56,3 +56,6 @@ dataset_1d_heartbreaker/
 #   data/Imagenes eco/        teammate's ~1.8GB raw-signal + 2D-image dump (source pool)
 #   data/Imagenes eco.zip     covered by *.zip
 #   data/ptbxl_database.csv   7MB index, only used by build_demo_cohort.py, covered by *.csv
+
+# Re-exclude macOS junk even inside the whitelisted data/raw tree
+**/.DS_Store
