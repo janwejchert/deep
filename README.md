@@ -12,6 +12,29 @@ The repository maintains two distinct, complementary pipelines:
 
 ---
 
+## 💼 Business Case & Value Proposition
+
+**The problem.** Cardiovascular disease is the leading cause of global mortality (~17.9M deaths/year). In emergency departments and general practice, 12‑lead ECGs accumulate faster than cardiologists can read them — under specialist shortage, a time‑critical finding (e.g., silent ischemia) can sit unreviewed in a FIFO queue for hours.
+
+**The product.** FVJ CardioAI is a **decision‑support triage layer** (explicitly *not* a doctor replacement) that screens raw 12‑lead signals at the source, ranks every incoming ECG by abnormality probability so high‑risk patients are surfaced first, and provides a multi‑label differential (MI / STTC / CD / HYP) plus a Grad‑CAM explanation for the reviewing clinician.
+
+**Quantified value (measured on this MVP, commodity Intel CPU):**
+
+| Metric | Value | Basis |
+| :--- | :--- | :--- |
+| Inference latency | **~0.1 s per 12‑lead ECG** (94 ms end‑to‑end, 88 ms model‑only) | Benchmarked over the 40‑patient demo cohort |
+| Throughput | **~600 ECGs / minute / CPU core** | 1 ÷ 0.094 s, single‑threaded; scales ~linearly with cores |
+| Triage turnaround | **seconds vs. hours** | Probability ranking vs. manual FIFO backlog |
+| Screening sensitivity | **0.858 recall** at a ≥0.85 clinical floor | 5‑fold patient‑disjoint cross‑validation (out‑of‑fold) |
+
+**Worked efficiency example (assumptions stated).** A mid‑size service reading ~500 ECGs/day at ~3–5 analyst‑minutes each spends ~25–40 staff‑hours/day on first‑pass review. Auto‑triaging the confidently‑normal fraction (NORM OOF ROC‑AUC **0.94**) for lighter review can redirect on the order of **10+ analyst‑hours/day** toward the abnormal cases that matter, while cutting time‑to‑flag for critical anomalies from hours to **~0.1 s**. *(Illustrative; real ROI requires site‑specific volumes and a prospective study.)*
+
+**Who it's for / how it deploys.** ED and cardiology triage desks. Runs **CPU‑only** with no GPU or cloud‑render dependency, enabling low‑latency execution on‑prem or embedded directly in ECG‑cart hardware.
+
+> **Regulatory status:** research prototype / proof‑of‑feasibility — **not** SaMD‑cleared. External validation (e.g., Chapman‑Shaoxing, CPSC), an ISO 13485 QMS, and FDA 510(k) / CE marking are prerequisites for clinical deployment.
+
+---
+
 ## 📊 Dataset & Descriptive Analytics
 
 The pipeline is evaluated on a standardized subset of **2,000 unique patient records** from the PTB-XL database, balanced exactly for binary classification:
@@ -237,47 +260,42 @@ The **FVJ CardioAI™ MVP** is a clinical decision-support application built usi
 
 ## 🚀 Quickstart
 
-### 1. Install Dependencies
+> **Python 3.11 is required.** The pinned `tensorflow==2.16.1` ships no wheels for Python 3.12+/3.13 and requires `numpy<2`; on 3.13 the install/launch will hang.
+
+### 1. Environment + dependencies
 
 ```bash
+conda create -n cardioai python=3.11 -y && conda activate cardioai
+# or:  python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Download raw waveforms
+### 2. Launch the MVP (runs out of the box)
 
-Download the balanced 2,000 patient subset of PTB-XL raw physiological signals:
-
-```bash
-python src/data_processing/download_ptbxl_2000.py
-```
-
-### 3. Run the 1D Physiological Model (ECG-Only)
-
-Train the 1D ResNet classifier on raw 10-second PTB-XL signal waveforms:
+The repo ships the trained models (`models/*.h5`) **and** a small, leakage‑clean **40‑patient demo cohort** (`data/raw/` + `data/unseen_demo_metadata.csv`), so the dashboard runs immediately — no dataset download or training required:
 
 ```bash
-python src/model_training/train_1d_ecg_model.py
+streamlit run src/streamlit_dashboard/app.py     # → http://localhost:8501
 ```
 
-Launch the interactive Streamlit triage application for raw ECG signals:
+Every prediction is **live**: the selected raw waveform is filtered, normalized, and passed to the Keras model at request time (~0.1 s/ECG). The *Validation & Leakage Audit* tab confirms the demo cohort is patient‑disjoint from training (0 overlap).
+
+### 3. (Optional) Reproduce the full pipeline from scratch
 
 ```bash
-streamlit run src/streamlit_dashboard/app.py
+python src/data_processing/download_ptbxl_2000.py         # fetch the 2,000-patient training subset
+python src/model_training/train_1d_ecg_model.py           # train 1D ResNet (StratifiedGroupKFold by patient_id)
+python src/model_training/train_multimodal_ecg_model.py   # train the Heartbreaker fusion model
+python src/model_evaluation/run_heartbreaker_stress_tests.py   # ablations + permutation importance
+python src/data_processing/build_demo_cohort.py --src data/raw # rebuild the unseen demo cohort
 ```
 
-### 4. Run the Multimodal Fusion Model (Heartbreaker)
+### 4. Deploy to Streamlit Community Cloud
 
-Train the multimodal model using fused ECG features and patient demographic metadata:
-
-```bash
-python src/model_training/train_multimodal_ecg_model.py
-```
-
-Run stress tests, ablation analyses, and permutation importance evaluations on the multimodal classifier:
-
-```bash
-python src/model_evaluation/run_heartbreaker_stress_tests.py
-```
+1. Push this repo to GitHub. The demo data is committed; the large `data/Imagenes eco/` source pool is git‑ignored.
+2. On [share.streamlit.io](https://share.streamlit.io) → **New app**, select the repo, set **Main file path** to `src/streamlit_dashboard/app.py`.
+3. In **Advanced settings**, set **Python version → 3.11** (required for TensorFlow 2.16.1).
+4. Deploy — the app loads the committed models + demo cohort and runs live inference with no secrets or external data.
 
 ---
 

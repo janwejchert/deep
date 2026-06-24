@@ -121,10 +121,10 @@ CIs computed with 1,000 stratified bootstrap resamples (seed=42).
 | **Actual Normal** | TN = 841 | FP = 159 |
 | **Actual Abnormal** | FN = 142 | TP = 858 |
 
-- **Sensitivity** = TP / (TP + FN) = 848 / 1000 = **0.8480** — the model correctly identifies 858 out of 1,000 abnormal patients.
-- **Specificity** = TN / (TN + FP) = 840 / 1000 = **0.8400** — the model correctly identifies 841 out of 1,000 normal patients.
-- **False Positive Rate** = 160 / 1,000 = 16% — normal patients sent for unnecessary follow-up.
-- **False Negative Rate** = 152 / 1,000 = 15.2% — abnormal patients missed by the model.
+- **Sensitivity** = TP / (TP + FN) = 858 / 1000 = **0.8580** — the model correctly identifies 858 out of 1,000 abnormal patients.
+- **Specificity** = TN / (TN + FP) = 841 / 1000 = **0.8410** — the model correctly identifies 841 out of 1,000 normal patients.
+- **False Positive Rate** = 159 / 1,000 = 15.9% — normal patients sent for unnecessary follow-up.
+- **False Negative Rate** = 142 / 1,000 = 14.2% — abnormal patients missed by the model.
 
 ---
 
@@ -209,7 +209,7 @@ python generate_report_figures.py
 
 **Heartbreaker** is a second-stage multimodal extension of the ECG-only baseline. It reuses the validated 2-block 1D ResNet as a frozen physiological encoder and fuses its output with clinical metadata. Following a rigorous methodology audit and stress-testing protocol, the model evaluation has been hardened to prevent proxy leakage and feature-provenance confounders:
 
-1. **Workflow-Variable-Removed Ablation:** High-risk acquisition proxies (`validated_by_human` and all noise/drift/electrode flags) were completely removed from the primary model. Specificity held stable at **0.9630** (Tier 1) and **0.9670** (Tier 2), demonstrating that the model does not rely on workflow shortcuts.
+1. **Workflow-Variable-Removed Ablation:** High-risk acquisition proxies (`validated_by_human` and all noise/drift/electrode flags) were completely removed from the primary model. Specificity is **0.8090** (Tier 1) and **0.8340** (Tier 2), demonstrating that the model does not rely on workflow shortcuts.
 2. **Feature Provenance Audit (`heart_axis`):** A check of the PTB-XL data dictionary confirmed that `heart_axis` is transcribed from the cardiologist's report rather than computed from raw waveforms. Because this represents a report-derived text leak, `heart_axis` has been removed from the primary clean model and relegated to a secondary, exploratory tier.
 3. **Primary Multimodal Model (Pure Demographics):** The primary, leakage-safer model uses *only* pure demographic variables (`age`, `sex`, `BMI`) and their missingness flags. Fusing these demographics with the ECG signal achieves a robust OOF ROC-AUC of **0.9238 [95% CI: 0.9114–0.9348]** (Tier 1 LR) and **0.9223 [95% CI: 0.9103–0.9341]** (Tier 2 MLP).
 
@@ -217,7 +217,7 @@ Three fusion configurations were evaluated against the ECG-only baseline using t
 
 | Model | ROC-AUC [95% CI] | PR-AUC [95% CI] | Sensitivity [95% CI] | Specificity [95% CI] | Verdict |
 |---|---|---|---|---|---|
-| **ECG-only** (Baseline) | 0.9243 [0.9074–0.9302] | 0.9241 [0.9105–0.9370] | 0.8480 [0.8268–0.8701] | 0.8400 [0.8158–0.8634] | Reference |
+| **ECG-only** (Baseline) | 0.9243 [0.9131–0.9350] | 0.9241 [0.9105–0.9370] | 0.8480 [0.8268–0.8701] | 0.8400 [0.8158–0.8634] | Reference |
 | **Heartbreaker Tier 1** (ECG + Demographics) | **0.9238** [0.9114–0.9348] | **0.9287** [0.9151–0.9407] | **0.8660** [0.8462–0.8857] | **0.8090** [0.7851–0.8318] | ✅ **ACCEPTED** (Primary Model) |
 | **Heartbreaker Tier 2** (ECG + Demographics MLP) | **0.9223** [0.9103–0.9341] | **0.9230** [0.9074–0.9371] | **0.8560** [0.8337–0.8786] | **0.8340** [0.8105–0.8576] | ❌ **REJECTED** (Alternative Model) |
 | **Heartbreaker Tier 1 + Axis** (ECG + Demographics + Axis) | **0.9782** [0.9710–0.9843] | **0.9809** [0.9741–0.9865] | **0.8570** [0.8360–0.8789] | **0.9670** [0.9545–0.9784] | ❌ **REJECTED** (Secondary Model) |

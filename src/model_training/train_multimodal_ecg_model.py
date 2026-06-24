@@ -29,7 +29,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import layers, models, callbacks, Input
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import StratifiedGroupKFold, train_test_split
 from sklearn.metrics import (roc_auc_score, average_precision_score,
                               accuracy_score, confusion_matrix, roc_curve)
 from sklearn.linear_model import LogisticRegression
@@ -350,7 +350,7 @@ def main():
     print(f"  ECG clean OOF probabilities loaded: shape={X_ecg_probs.shape}")
 
     # ── 5. Cross-validation ───────────────────────────────────────────
-    skf = StratifiedKFold(n_splits=N_FOLDS, shuffle=True, random_state=RANDOM_STATE)
+    skf = StratifiedGroupKFold(n_splits=N_FOLDS, shuffle=True, random_state=RANDOM_STATE)
 
     # OOF arrays
     oof_tier1_probs  = np.zeros(len(y))
@@ -362,7 +362,7 @@ def main():
     print(f"Starting {N_FOLDS}-Fold Patient-Disjoint CV")
     print(f"{'─'*60}")
 
-    for fold, (train_idx, test_idx) in enumerate(skf.split(X_signals, y)):
+    for fold, (train_idx, test_idx) in enumerate(skf.split(X_signals, y, groups=patient_ids)):
         print(f"\n{'─'*50}\n  Fold {fold+1}/{N_FOLDS}")
 
         # ── Nested split: 80% sub-train, 20% val-cal ──────────────

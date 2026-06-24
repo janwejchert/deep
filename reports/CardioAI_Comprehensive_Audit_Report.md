@@ -25,7 +25,7 @@ We audited the dataset characteristics, patient overlap, and physical file loadi
   * *Status:* Perfectly balanced 1:1 ratio, removing baseline class prevalence biases.
 
 ### 1.2 Deprecation of 2D ECG Image Layouts
-Early versions of the pipeline processed 2D grid renders of ECG waveforms rather than 1D time-series. A near-duplicate audit (`check_leakage.py`) using perceptual hashing (pHash) with a Hamming distance of $\leq 6$ was executed on the image splits.
+Early versions of the pipeline processed 2D grid renders of ECG waveforms rather than 1D time-series. A near-duplicate audit using perceptual hashing (pHash) with a Hamming distance of $\leq 6$ was executed on the image splits.
 * **Leakage Result:** **65.0%** of the images in the test set had near-duplicates in the training set (driven by multiple recordings from the same patients appearing on both sides of the split).
 * **Confounder Result:** **100%** of the Normal images were sourced from the Latidos database, while Abnormal images came from PTB-XL, allowing classifiers to learn paper grain and grid styling instead of cardiac physiology.
 * **Remediation:** The entire 2D image pipeline was deprecated and replaced by the 1D raw waveform pipeline.

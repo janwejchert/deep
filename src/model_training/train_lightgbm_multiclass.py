@@ -10,7 +10,7 @@ import json
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.metrics import roc_auc_score, average_precision_score, f1_score
 from sklearn.impute import SimpleImputer
 import warnings
@@ -46,14 +46,14 @@ def main():
     
     # 5-Fold CV, stratified on the majority label for reasonable splits
     primary_label = np.argmax(y, axis=1)
-    kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    kf = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)
     
     oof_probs = np.zeros_like(y, dtype=float)
     feature_importances = {sc: np.zeros(len(feature_cols)) for sc in SUPERCLASSES}
     
     print("\n=== Starting 5-Fold CV (One-vs-Rest LightGBM) ===\n")
     
-    for fold, (train_idx, test_idx) in enumerate(kf.split(X, primary_label)):
+    for fold, (train_idx, test_idx) in enumerate(kf.split(X, primary_label, groups=patient_ids)):
         print(f"--- Fold {fold+1}/5 ---")
         
         # Verify patient disjointness

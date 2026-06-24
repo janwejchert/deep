@@ -5,7 +5,7 @@ import wfdb
 import scipy.signal as signal
 import tensorflow as tf
 from tensorflow.keras import layers, models, callbacks
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.metrics import roc_auc_score, average_precision_score
 
 SUPERCLASSES = ['NORM', 'MI', 'STTC', 'CD', 'HYP']
@@ -127,22 +127,26 @@ def main():
     metadata_path = 'data/subset_multiclass_metadata.csv'
     base_dir = 'data/raw'
     
-    X, y, _ = load_multiclass_dataset(metadata_path, base_dir)
-    
+    X, y, valid_indices = load_multiclass_dataset(metadata_path, base_dir)
+
     if len(X) == 0:
         print("No valid signals loaded.")
         return
-        
+
     print(f"Loaded {len(X)} records. Shape: {X.shape}")
     print(f"Class distribution: {np.sum(y, axis=0)}")
-    
-    kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+    # Enforce patient-disjoint folds via groups=patient_id (records are 1-per-patient),
+    # stratified on the dominant label to balance prevalence across folds.
+    patient_ids = pd.read_csv(metadata_path).iloc[valid_indices]['patient_id'].values
+    primary_label = np.argmax(y, axis=1)
+    kf = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)
     
     oof_probs = np.zeros_like(y, dtype=float)
     
     print("\nStarting 5-Fold Cross Validation (Multi-label)...")
     
-    for fold, (train_idx, test_idx) in enumerate(kf.split(X, y)):
+    for fold, (train_idx, test_idx) in enumerate(kf.split(X, primary_label, groups=patient_ids)):
         print(f"\n--- Fold {fold+1}/5 ---")
         X_train, X_test = X[train_idx], X[test_idx]
         y_train, y_test = y[train_idx], y[test_idx]

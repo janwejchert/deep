@@ -5,7 +5,7 @@ import wfdb
 import scipy.signal as signal
 import tensorflow as tf
 from tensorflow.keras import layers, models, callbacks
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import StratifiedGroupKFold, train_test_split
 from sklearn.metrics import roc_auc_score, accuracy_score, classification_report, confusion_matrix, roc_curve, average_precision_score
 from sklearn.linear_model import LogisticRegression
 from multimodal_data_prep import load_and_cache_dataset
@@ -176,13 +176,16 @@ def main():
     metadata_path = 'data/subset_metadata_2000.csv'
     base_dir = 'data/raw'
     
-    X, y, _ = load_and_cache_dataset(metadata_path, base_dir)
-    
+    X, y, valid_indices = load_and_cache_dataset(metadata_path, base_dir)
+
     if len(X) == 0:
         print("No valid signals loaded.")
         return
-    
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+    # Enforce patient-disjoint folds via groups=patient_id so the "Patient-Disjoint CV"
+    # guarantee is structural, not incidental (records are already 1-per-patient).
+    patient_ids = pd.read_csv(metadata_path).iloc[valid_indices]['patient_id'].values
+    skf = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)
     
     # Arrays to store out-of-fold predictions
     oof_probs_cal = np.zeros(len(y))
@@ -190,7 +193,7 @@ def main():
     
     print("\nStarting 5-Fold Cross Validation with Nested Threshold Calibration...")
     
-    for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
+    for fold, (train_idx, test_idx) in enumerate(skf.split(X, y, groups=patient_ids)):
         print(f"\n--- Fold {fold+1}/5 ---")
         X_train, X_test = X[train_idx], X[test_idx]
         y_train, y_test = y[train_idx], y[test_idx]

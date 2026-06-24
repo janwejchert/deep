@@ -22,6 +22,9 @@ from PIL import Image
 
 # Set premium page config
 current_dir = os.path.dirname(os.path.abspath(__file__))
+# Repo root (.../deep-learning-project) so the app runs from ANY working directory
+# (local launch, Docker, or Streamlit Cloud) rather than only from the repo root.
+PROJECT_ROOT = os.path.dirname(os.path.dirname(current_dir))
 logo_path = os.path.join(current_dir, "assets", "logo.png")
 try:
     favicon = Image.open(logo_path)
@@ -280,27 +283,27 @@ st.markdown("""
 
 @st.cache_resource
 def load_binary_model():
-    model_path = 'models/binary_1d_ecg_model.h5'
+    model_path = os.path.join(PROJECT_ROOT, 'models', 'binary_1d_ecg_model.h5')
     if os.path.exists(model_path):
         return tf.keras.models.load_model(model_path, compile=False)
     return None
 
 @st.cache_resource
 def load_multiclass_model():
-    model_path = 'models/multiclass_1d_ecg_model.h5'
+    model_path = os.path.join(PROJECT_ROOT, 'models', 'multiclass_1d_ecg_model.h5')
     if os.path.exists(model_path):
         return tf.keras.models.load_model(model_path, compile=False)
     return None
 
 @st.cache_data
 def load_metadata():
-    metadata_path = 'data/unseen_demo_metadata.csv'
+    metadata_path = os.path.join(PROJECT_ROOT, 'data', 'unseen_demo_metadata.csv')
     if os.path.exists(metadata_path):
         df = pd.read_csv(metadata_path)
         # Filter to records where raw signals exist on disk (both header and data binary)
         valid_records = []
         for i, row in df.iterrows():
-            record_path = os.path.join('data/raw', row['filename_lr'])
+            record_path = os.path.join(PROJECT_ROOT, 'data', 'raw', row['filename_lr'])
             if os.path.exists(record_path + '.hea') and os.path.exists(record_path + '.dat'):
                 valid_records.append(row)
         return pd.DataFrame(valid_records)
@@ -309,7 +312,7 @@ def load_metadata():
 @st.cache_data
 def load_thresholds():
     # Load CNN multiclass thresholds
-    thresh_path = 'models/multiclass_thresholds_cnn.json'
+    thresh_path = os.path.join(PROJECT_ROOT, 'models', 'multiclass_thresholds_cnn.json')
     if os.path.exists(thresh_path):
         with open(thresh_path, 'r') as f:
             return json.load(f)
@@ -495,7 +498,7 @@ tab1, tab2 = st.tabs(["Diagnostic Inference", "Validation & Leakage Audit"])
 with tab1:
     # Main Window Logic
     if record_filename:
-        record_path = os.path.join('data/raw', record_filename)
+        record_path = os.path.join(PROJECT_ROOT, 'data', 'raw', record_filename)
 
         # Preprocess ECG Waveform
         norm_sig, raw_sig = preprocess_ecg_signal(record_path)
@@ -589,7 +592,7 @@ with tab1:
                     codes_dict = {}
 
                 try:
-                    scp_df = pd.read_csv('scp_statements.csv')
+                    scp_df = pd.read_csv(os.path.join(PROJECT_ROOT, 'data', 'scp_statements.csv'))
                     scp_df = scp_df.rename(columns={scp_df.columns[0]: 'code'})
                     scp_map = scp_df.set_index('code')['description'].to_dict()
                 except Exception:
@@ -966,9 +969,9 @@ with tab2:
         import ast
         
         # Load datasets
-        binary_path = 'data/subset_metadata_2000.csv'
-        multi_path = 'data/subset_multiclass_metadata.csv'
-        demo_path = 'data/unseen_demo_metadata.csv'
+        binary_path = os.path.join(PROJECT_ROOT, 'data', 'subset_metadata_2000.csv')
+        multi_path = os.path.join(PROJECT_ROOT, 'data', 'subset_multiclass_metadata.csv')
+        demo_path = os.path.join(PROJECT_ROOT, 'data', 'unseen_demo_metadata.csv')
         
         st.markdown("#### 1. Binary Triage Split Integrity")
         if os.path.exists(binary_path):
@@ -1020,7 +1023,7 @@ with tab2:
             st.write(f"* **Total Demo Records:** `{total_demo}`")
             st.write(f"* **Unique Demo Patient IDs:** `{uniq_demo}`")
             if len(overlap) == 0:
-                st.success(f"✅ **Out-of-Sample Clean:** 0/28 demo patients overlap with the training datasets. True clinical generalization verified!")
+                st.success(f"✅ **Out-of-Sample Clean:** {len(overlap)}/{total_demo} demo patients overlap with the training datasets. True clinical generalization verified!")
             else:
                 st.error(f"❌ **LEAKAGE DETECTED:** {len(overlap)} demo patients exist in the training set!")
 # Footer/Credits

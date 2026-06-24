@@ -258,6 +258,6 @@ Based on the full suite of ablation stress tests, the Heartbreaker evaluation hi
 
 ### Final Conclusion
 
-By subjecting the pipeline to standalone single-modality checks, group-wise permutations, and provenance audits, the evidence supports a defensible internal-validation result. The primary clean model (Level 3) achieves a highly robust OOF performance (**ROC-AUC 0.9238, Sensitivity 0.8570, Specificity 0.9620**), proving that clinical context adds significant discriminative value without introducing workflow-proxy or text-derived leakage.
+By subjecting the pipeline to standalone single-modality checks, group-wise permutations, and provenance audits, the evidence supports a defensible internal-validation result. The primary clean model (Level 3) achieves a highly robust OOF performance (**ROC-AUC 0.9238, Sensitivity 0.8660, Specificity 0.8090**), matching the ECG-only baseline's discrimination while improving sensitivity — without introducing workflow-proxy or text-derived leakage.
 
 External validation on independent datasets is required before making any clinical claims.

@@ -18,7 +18,7 @@ The audit covers all three major modeling phases of the project:
 
 ### A. Deprecated 2D Image Baseline
 In the early stage of the project, 2D rendered images of ECG paper strips were used. The training and test splits were partitioned randomly at the image level rather than the patient level.
-* **Leakage Discovery:** A perceptual hashing (pHash) near-duplicate audit (`check_leakage.py`) with a Hamming distance threshold of $\leq 6$ was executed on the image splits.
+* **Leakage Discovery:** A perceptual hashing (pHash) near-duplicate audit with a Hamming distance threshold of $\leq 6$ was executed on the image splits.
 * **Audit Result:** Approximately **65.0%** of the images in the test set had near-duplicates in the training set. This occurred because patients with multiple ECG recordings (or adjacent paper strip crops) were split across train and test sets, causing massive data leakage. The high apparent test accuracy (90%) was a statistical illusion driven by this leakage.
 
 ### B. Active 1D Raw-Signal Datasets (PTB-XL)

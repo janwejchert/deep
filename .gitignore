@@ -45,3 +45,14 @@ dataset_1d_heartbreaker/
 !models/lightgbm_multiclass_results.txt
 !models/lightgbm_feature_importances.json
 !models/multiclass_thresholds*.json
+
+# Committed demo cohort (small) so the MVP runs on a fresh clone / Streamlit Cloud
+!data/raw/
+!data/raw/**
+!data/unseen_demo_metadata.csv
+!data/scp_statements.csv
+
+# Kept ignored on purpose (large / not needed at runtime):
+#   data/Imagenes eco/        teammate's ~1.8GB raw-signal + 2D-image dump (source pool)
+#   data/Imagenes eco.zip     covered by *.zip
+#   data/ptbxl_database.csv   7MB index, only used by build_demo_cohort.py, covered by *.csv
